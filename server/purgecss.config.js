@@ -4,5 +4,8 @@ module.exports = {
     'dist/main.js'
   ],
   css: ['src/tailwind.min.css'],
-  output: 'dist'
+  output: 'dist',
+  'safelist': [
+    /1\/2/
+  ]
 }
