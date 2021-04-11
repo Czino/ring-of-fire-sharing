@@ -2,7 +2,6 @@ const fs = require('fs')
 const path = require('path')
 const express = require('express')
 const http = require('http')
-const https = require('https')
 const config = require('./config.json')
 const auth = require('basic-auth')
 const bcrypt = require('bcrypt')
@@ -62,16 +61,3 @@ app.post('/updateStatus', (req, res) => {
 
 http.createServer(app).listen(process.env.PORT || 80)
 console.info('Created http server with port', process.env.PORT || 80)
-
-if (sslExists) {
-  console.info('SSL Certificate exists, start HTTPS server')
-  const options = {
-    key: fs.readFileSync(config.key, 'utf8'),
-    cert: fs.readFileSync(config.cert, 'utf8'),
-    ca: fs.readFileSync(config.chain, 'utf8')
-  }
-  https.createServer(options, app).listen(process.env.SSLPORT || 443)
-  console.info('Created https server with port', process.env.SSLPORT || 443)
-} else {
-  console.info('SSL Certificate does not exist')
-}

@@ -2,8 +2,5 @@
   "auth": {
     "user": "USERNAME",
     "secret": "HASHEDPASSWORD // use the following to get password: bcrypt.hashSync('THEPASSWORD', 10)"
-  },
-  "cert": "PATH/TO/SSL/CERT",
-  "key": "PATH/TO/SSL/PRIVATEKEY",
-  "chain": "PATH/TO/SSL/CHAIN"
+  }
 }
