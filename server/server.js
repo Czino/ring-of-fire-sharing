@@ -7,7 +7,7 @@ const config = require('./config.json')
 const auth = require('basic-auth')
 const bcrypt = require('bcrypt')
 
-const sslExists = fs.existsSync(config.certificate)
+const sslExists = fs.existsSync(config.cert)
 const app = express()
 
 const ringStats = {}
@@ -66,8 +66,8 @@ console.info('Created http server with port', process.env.PORT || 80)
 if (sslExists) {
   console.info('SSL Certificate exists, start HTTPS server')
   const options = {
-    key: fs.readFileSync(config.privateKey, 'utf8'),
-    cert: fs.readFileSync(config.certificate, 'utf8'),
+    key: fs.readFileSync(config.key, 'utf8'),
+    cert: fs.readFileSync(config.cert, 'utf8'),
     ca: fs.readFileSync(config.chain, 'utf8')
   }
   https.createServer(options, app).listen(process.env.SSLPORT || 443)
