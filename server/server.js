@@ -1,4 +1,3 @@
-const fs = require('fs')
 const path = require('path')
 const express = require('express')
 const http = require('http')
@@ -6,18 +5,9 @@ const config = require('./config.json')
 const auth = require('basic-auth')
 const bcrypt = require('bcrypt')
 
-const sslExists = fs.existsSync(config.cert)
 const app = express()
 
 const ringStats = {}
-
-if (sslExists) {
-  app.all('*', (req, res, next) => {
-    if (req.secure) return next()
-    console.log('redirect')
-    res.redirect(302, 'https://' + req.hostname + req.url)
-  })
-}
 
 app.use((req, res, next) => {
   let user = auth(req)
