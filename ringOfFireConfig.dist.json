@@ -1,0 +1,13 @@
+{
+  "auth": {
+    "user": "USERNAME",
+    "password": "PASSWORD"
+  },
+  "url": "URL_TO_SERVER",
+  "peers": [
+    "PUBLIC_KEY_OF_RING_PEER1@ADDRESS",
+    "PUBLIC_KEY_OF_RING_PEER2@ADDRESS",
+    "PUBLIC_KEY_OF_RING_PEER3@ADDRESS",
+    "..."
+  ]
+}
