@@ -1,0 +1,9 @@
+/node_modules
+.well-known/acme-challenge/*
+!.well-known/acme-challenge/.gitkeep
+
+/dist/*.css
+
+config.json
+
+.DS_Store
