@@ -86,6 +86,7 @@ WantedBy=multi-user.target
 *Start and enable the newly created service*
 
 `sudo systemctl start ring-of-fire-sharing.service`
+
 `sudo systemctl enable ring-of-fire-sharing.service`
 
 The script will now keep running 24/7 and automatically start when your node reboots
