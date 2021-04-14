@@ -31,4 +31,4 @@ Make sure you have access to `lncli`
 
 Execute the command as follows
 
-`. sendRingStats.sh`
+`./sendRingStats.sh`

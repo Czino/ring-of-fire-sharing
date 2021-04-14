@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo "{"
 
 node_info=$(lncli getinfo)
