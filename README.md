@@ -40,7 +40,10 @@ Make sure you have access to `lncli` or `lightning-cli`
 
 Execute the command as follows
 
-`. sendRingStats.sh`
+
+
+
+`./sendRingStats.sh`
 
 
 ## Run script as a service

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo "{"
 
 implementation=$(jq -c '.implementation' ringOfFireConfig.json | tr -d '"')
