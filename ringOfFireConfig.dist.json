@@ -4,6 +4,7 @@
     "password": "PASSWORD"
   },
   "url": "URL_TO_SERVER",
+  "implementation": "lnd|c-lightning",
   "peers": [
     "PUBLIC_KEY_OF_RING_PEER1@ADDRESS",
     "PUBLIC_KEY_OF_RING_PEER2@ADDRESS",
