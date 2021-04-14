@@ -1,7 +1,7 @@
 echo "{"
 
-implementation=$(jq -c '.implementation' ringOfFireConfig.json)
-if [[ implementation == 'c-lightning' ]]
+implementation=$(jq -c '.implementation' ringOfFireConfig.json | tr -d '"')
+if [[ "$implementation" == 'c-lightning' ]]
 then
   node_info=$(lightning-cli getinfo)
   my_node_id=$(echo "$node_info" | jq -r '.id')
@@ -42,7 +42,7 @@ echo "\"ringPeers\": ["
 echo "$peers" | while read peer; do
   peer=$(echo "$peer" | tr -d '"')
   node_id=$(echo "$peer" | cut -f1 -d@)
-  if [[ implementation == 'c-lightning' ]]
+  if [[ "$implementation" == 'c-lightning' ]]
   then
     peerInfo=$(lightning-cli listpeers "$node_id" | jq -r '.peers[]' | jq -r '.channels[0]' | jq -r --arg node_id "$node_id" '{ nodeId: $node_id, chan_id: .short_channel_id, local_balance: .spendable_msatoshi, remote_balance: .receivable_msatoshi }')
   else
