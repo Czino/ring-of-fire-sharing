@@ -1,5 +1,6 @@
 #!/bin/bash
 
+cd "$( dirname "${BASH_SOURCE[0]}" )/."
 
 user=$(jq -c '.auth.user' ringOfFireConfig.json | tr -d '"')
 password=$(jq -c '.auth.password' ringOfFireConfig.json | tr -d '"')
