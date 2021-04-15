@@ -17,16 +17,19 @@ Replace placeholders with real values
     "user": "USERNAME",
     "password": "PASSWORD"
   },
-  "implementation": "lnd|c-lightning",
   "url": "URL_TO_SERVER",
+  "implementation": "lnd|c-lightning",
+  "method": "rest",
+  "macaroon": "PATH/TO/readonly.macaroon",
+  "tlscert": "PATH/TO/tls.cert",
   "peers": [
-    "ADDRESS_OF_RINGMEMBER_1",
-    "ADDRESS_OF_RINGMEMBER_2",
-    "ADDRESS_OF_RINGMEMBER_3",
-    "ADDRESS_OF_RINGMEMBER_4"
+    "PUBLIC_KEY_OF_RING_PEER1@ADDRESS",
+    "PUBLIC_KEY_OF_RING_PEER2@ADDRESS",
+    "PUBLIC_KEY_OF_RING_PEER3@ADDRESS",
     "..."
   ]
 }
+
 ```
 - USERNAME: your username you received from the coordinator
 - PASSWORD: your password you received from the coordinator

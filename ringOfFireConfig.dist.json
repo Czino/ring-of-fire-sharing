@@ -5,6 +5,9 @@
   },
   "url": "URL_TO_SERVER",
   "implementation": "lnd|c-lightning",
+  "method": "rest",
+  "macaroon": "PATH/TO/readonly.macaroon",
+  "tlscert": "PATH/TO/tls.cert",
   "peers": [
     "PUBLIC_KEY_OF_RING_PEER1@ADDRESS",
     "PUBLIC_KEY_OF_RING_PEER2@ADDRESS",

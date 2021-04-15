@@ -3,15 +3,29 @@
 echo "{"
 
 implementation=$(jq -c '.implementation' ringOfFireConfig.json | tr -d '"')
+method=$(jq -c '.method' ringOfFireConfig.json | tr -d '"')
+if [[ "$method" == 'rest' ]]
+then
+  macaroon=$(jq -c '.macaroon' ringOfFireConfig.json | tr -d '"')
+  MACAROON_HEADER="Grpc-Metadata-macaroon: $(xxd -ps -u -c 1000 $macaroon)"
+  restUrl=$(jq -c '.restUrl' ringOfFireConfig.json | tr -d '"')
+  tlscert=$(jq -c '.tlscert' ringOfFireConfig.json | tr -d '"')
+fi
+
 if [[ "$implementation" == 'c-lightning' ]]
 then
   node_info=$(lightning-cli getinfo)
   my_node_id=$(echo "$node_info" | jq -r '.id')
   alias=$(echo "$node_info" | jq -r '.alias')
   color=$(echo "$node_info" | jq -r '.color')
-else
   color="#$color"
-  node_info=$(lncli getinfo)
+else
+  if [[ "$method" == 'rest' ]]
+  then
+    node_info=$(curl -s -X GET --cacert "$tlscert" --header "$MACAROON_HEADER" "$restUrl"/v1/getinfo)
+  else
+    node_info=$(lncli getinfo)
+  fi
   my_node_id=$(echo "$node_info" | jq -r '.identity_pubkey')
   alias=$(echo "$node_info" | jq -r '.alias')
   color=$(echo "$node_info" | jq -r '.color')
@@ -41,6 +55,15 @@ done
 echo "],"
 
 echo "\"ringPeers\": ["
+if [[ "$implementation" != 'c-lightning' ]]
+then
+  if [[ "$method" == 'rest' ]]
+  then
+    channels=$(curl -s -X GET --cacert "$tlscert" --header "$MACAROON_HEADER" "$restUrl"/v1/channels)
+  else
+    channels=$(lncli listchannels)
+  fi
+fi
 echo "$peers" | while read peer; do
   peer=$(echo "$peer" | tr -d '"')
   node_id=$(echo "$peer" | cut -f1 -d@)
@@ -48,7 +71,7 @@ echo "$peers" | while read peer; do
   then
     peerInfo=$(lightning-cli listpeers "$node_id" | jq -r '.peers[]' | jq -r '.channels[0]' | jq -r --arg node_id "$node_id" '{ nodeId: $node_id, chan_id: .short_channel_id, local_balance: .spendable_msatoshi, remote_balance: .receivable_msatoshi }')
   else
-    peerInfo=$(lncli listchannels --peer "$node_id" | jq -r '.channels[]' | jq -r --arg node_id "$node_id" '{ nodeId: $node_id, chan_id: .chan_id, local_balance: ((.local_balance | tonumber) * 1000), remote_balance: ((.remote_balance | tonumber) * 1000), active: .active }')
+    peerInfo=$(echo "$channels" | jq -r --arg node_id "$node_id" '.channels[] | select(contains({"remote_pubkey": $node_id}))' | jq -r '{ nodeId: .remote_pubkey, chan_id: .chan_id, local_balance: ((.local_balance | tonumber) * 1000), remote_balance: ((.remote_balance | tonumber) * 1000), active: .active }')
   fi
 
   if [ -n "$peerInfo" ]
