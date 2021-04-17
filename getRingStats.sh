@@ -2,14 +2,15 @@
 
 echo "{"
 
-implementation=$(jq -c '.implementation' ringOfFireConfig.json | tr -d '"')
-method=$(jq -c '.method' ringOfFireConfig.json | tr -d '"')
+config=$(jq -c '.' ringOfFireConfig.json)
+implementation=$(echo "$config" | jq -r '.implementation' | tr -d '"')
+method=$(echo "$config" | jq -r '.method' | tr -d '"')
 if [[ "$method" == 'rest' ]]
 then
-  macaroon=$(jq -c '.macaroon' ringOfFireConfig.json | tr -d '"')
+  macaroon=$(echo "$config" | jq -r '.macaroon' | tr -d '"')
   MACAROON_HEADER="Grpc-Metadata-macaroon: $(xxd -ps -u -c 1000 $macaroon)"
-  rest_url=$(jq -c '.restUrl' ringOfFireConfig.json | tr -d '"')
-  tlscert=$(jq -c '.tlscert' ringOfFireConfig.json | tr -d '"')
+  rest_url=$(echo "$config" | jq -r '.restUrl' | tr -d '"')
+  tlscert=$(echo "$config" | jq -r '.tlscert' | tr -d '"')
 fi
 
 if [[ "$implementation" == 'c-lightning' ]]
@@ -32,7 +33,7 @@ else
   feeReport=$(lncli feereport | jq -r '.')
 fi
 
-peers=$(jq -c '.peers[]' ringOfFireConfig.json)
+peers=$(echo "$config" | jq -r '.peers[]')
 
 echo "\"nodeId\":\"${my_node_id}\","
 echo "\"alias\":\"${alias}\","
