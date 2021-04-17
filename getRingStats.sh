@@ -8,7 +8,7 @@ if [[ "$method" == 'rest' ]]
 then
   macaroon=$(jq -c '.macaroon' ringOfFireConfig.json | tr -d '"')
   MACAROON_HEADER="Grpc-Metadata-macaroon: $(xxd -ps -u -c 1000 $macaroon)"
-  restUrl=$(jq -c '.restUrl' ringOfFireConfig.json | tr -d '"')
+  rest_url=$(jq -c '.restUrl' ringOfFireConfig.json | tr -d '"')
   tlscert=$(jq -c '.tlscert' ringOfFireConfig.json | tr -d '"')
 fi
 
@@ -22,7 +22,7 @@ then
 else
   if [[ "$method" == 'rest' ]]
   then
-    node_info=$(curl -s -X GET --cacert "$tlscert" --header "$MACAROON_HEADER" "$restUrl"/v1/getinfo)
+    node_info=$(curl -s -X GET --cacert "$tlscert" --header "$MACAROON_HEADER" "$rest_url"/v1/getinfo)
   else
     node_info=$(lncli getinfo)
   fi
@@ -55,22 +55,21 @@ done
 echo "],"
 
 echo "\"ringPeers\": ["
-if [[ "$implementation" != 'c-lightning' ]]
-then
-  if [[ "$method" == 'rest' ]]
-  then
-    channels=$(curl -s -X GET --cacert "$tlscert" --header "$MACAROON_HEADER" "$restUrl"/v1/channels)
-  else
-    channels=$(lncli listchannels)
-  fi
-fi
 echo "$peers" | while read peer; do
   peer=$(echo "$peer" | tr -d '"')
   node_id=$(echo "$peer" | cut -f1 -d@)
+
   if [[ "$implementation" == 'c-lightning' ]]
   then
     peerInfo=$(lightning-cli listpeers "$node_id" | jq -r '.peers[]' | jq -r '.channels[0]' | jq -r --arg node_id "$node_id" '{ nodeId: $node_id, chan_id: .short_channel_id, local_balance: .spendable_msatoshi, remote_balance: .receivable_msatoshi }')
   else
+    if [[ "$method" == 'rest' ]]
+    then
+      encoded_node_id=$(echo "$node_id" | xxd -r -p | base64)
+      channels=$(curl -G -s --cacert "$tlscert" --header "$MACAROON_HEADER" --data-urlencode "peer=$encoded_node_id" "https://127.0.0.1:8080/v1/channels")
+    else
+      channels=$(lncli listchannels --peer "$node_id")
+    fi
     peerInfo=$(echo "$channels" | jq -r --arg node_id "$node_id" '.channels[] | select(contains({"remote_pubkey": $node_id}))' | jq -r '{ nodeId: .remote_pubkey, chan_id: .chan_id, local_balance: ((.local_balance | tonumber) * 1000), remote_balance: ((.remote_balance | tonumber) * 1000), active: .active }')
   fi
 
