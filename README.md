@@ -19,7 +19,9 @@ Replace placeholders with real values
   },
   "url": "URL_TO_SERVER",
   "implementation": "lnd|c-lightning",
+  "cli": "lncli|c-lightning|/path/to/your/cli",
   "method": "rest",
+  "restUrl": "https://127.0.0.1:8080",
   "macaroon": "PATH/TO/readonly.macaroon",
   "tlscert": "PATH/TO/tls.cert",
   "peers": [
@@ -30,13 +32,19 @@ Replace placeholders with real values
   ]
 }
 
-```
-- USERNAME: your username you received from the coordinator
-- PASSWORD: your password you received from the coordinator
-- URL_TO_SERVER: url of the server used for data sharing
-- IMPLEMENTATION: your lightning implementation (lnd or c-lightning)
-- ADDRESS_OF_RINGMEMBER_X: Address (nodeid@address:port) to all your peers of the ring in order
 
+```
+- auth
+  - user: your username you received from the coordinator
+  - password. your password you received from the coordinator
+- url: url of the server used for data sharing
+- implementation: your lightning implementation (`lnd` or `c-lightning`)
+- peers: Address (nodeid@address:port) to all your direct peers of the ring
+- implementation: (optional, default: `lnd`) your lightning implementation (currently supported lnd & c-lightning)
+- cli: (optional, default lnd or `c-lightning`) specify the command to your cli ([background](https://docs.btcpayserver.org/LightningNetwork/#c-lightning-commands-lightning-cli))
+- method: (optional, default: `cli`) can be specified as `rest` to execute commands to the lnd REST API
+- restUrl: (if method is `rest`) url to your rest API
+- tlscert: (if method is `rest`) the path to the tlscertificate
 ## Execution
 
 Make sure you have access to `lncli` or `lightning-cli`
@@ -44,10 +52,7 @@ Make sure you have access to `lncli` or `lightning-cli`
 Execute the command as follows
 
 
-
-
 `./sendRingStats.sh`
-
 
 ## Run script as a service
 

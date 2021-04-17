@@ -5,7 +5,9 @@
   },
   "url": "URL_TO_SERVER",
   "implementation": "lnd|c-lightning",
+  "cli": "lncli|c-lightning|/path/to/your/cli",
   "method": "rest",
+  "restUrl": "https://127.0.0.1:8080",
   "macaroon": "PATH/TO/readonly.macaroon",
   "tlscert": "PATH/TO/tls.cert",
   "peers": [
