@@ -60,7 +60,25 @@ then
     esac
   done
 else
-  method="cli"
+  PS3='c-lightning or shell script? (type the corresponding number):'
+  options=("cli" "specify path to script")
+  select opt in "${options[@]}"
+  do
+    case $opt in
+      "cli")
+        method="cli"
+        break
+        ;;
+      "specify path to script")
+        read -p 'Path to script: ' method
+        break
+        ;;
+      "Quit")
+        break
+        ;;
+      *) echo "invalid option $REPLY";;
+    esac
+  done
 fi
 
 if [[ "$method" == 'rest' ]]
