@@ -2,7 +2,13 @@
 
 echo "{"
 
-config=$(jq -c '.' ringOfFireConfig.json)
+config_file=ringOfFireConfig.json
+if [ ! -f "$config_file" ]; then
+  echo "$config_file does not exists."
+  return
+fi
+
+config=$(jq -c '.' "$config_file")
 implementation=$(echo "$config" | jq -r '.implementation' | tr -d '"')
 method=$(echo "$config" | jq -r '.method' | tr -d '"')
 if [[ "$method" == 'rest' ]]
