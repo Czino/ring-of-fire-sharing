@@ -112,8 +112,9 @@ config=$(echo "${peers[@]}" | jq -s \
   --arg url "$url" \
   --arg implementation "$implementation" \
   --arg method "$method" \
+  --arg cli "$cli" \
   --arg rest_url "$rest_url" \
   --arg macaroon "$macaroon" \
   --arg tlscert "$tlscert" \
-  '{ peers: ., auth: { user: $user, password: $password }, url: $url, implementation: $implementation, method: $method, rest_url: $rest_url, macaroon: $macaroon, tlscert: $tlscert }' )
+  '{ peers: ., auth: { user: $user, password: $password }, url: $url, implementation: $implementation, cli: $cli, method: $method, rest_url: $rest_url, macaroon: $macaroon, tlscert: $tlscert }' )
 echo "$config" | tee "$config_file" >/dev/null

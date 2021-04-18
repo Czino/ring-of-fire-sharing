@@ -21,11 +21,14 @@ then
   tlscert=$(echo "$config" | jq -r '.tlscert' | tr -d '"')
 else
   cli=$(echo "$config" | jq -r '.cli' | tr -d '"')
+  if [[ "$cli" == *".sh"* ]]; then
+    cli=". $cli"
+  fi
 fi
 
 if [[ "$implementation" == 'c-lightning' ]]
 then
-  if [[ "$cli" == 'null' ]]
+  if [[ "$cli" == 'null' || "$cli" == '' ]]
   then
     cli="lightning-cli"
   fi
@@ -40,7 +43,7 @@ else
   then
     node_info=$(curl -s -X GET --cacert "$tlscert" --header "$MACAROON_HEADER" "$rest_url"/v1/getinfo)
   else
-    if [[ "$cli" == 'null' ]]
+    if [[ "$cli" == 'null' || "$cli" == '' ]]
     then
       cli="lncli"
     fi
