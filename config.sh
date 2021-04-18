@@ -37,20 +37,42 @@ done
 if [[ "$implementation" == 'lnd' ]]
 then
   PS3='cli or REST API? (type the corresponding number):'
-  options=("cli" "REST" "specify path to script")
+  options=("cli" "REST")
   select opt in "${options[@]}"
   do
     case $opt in
       "cli")
         method="cli"
+        PS3='lncli btcpayserver or shell script? (type the corresponding number):'
+        options=("lncli" "btcpayserver (docker)" "specify path to script")
+        select opt in "${options[@]}"
+        do
+          case $opt in
+            "lncli")
+              cli="lncli"
+              break
+              ;;
+            "btcpayserver (docker)")
+              cli="docker exec btcpayserver_lnd_bitcoin lncli --macaroonpath /root/.lnd/admin.macaroon"
+              break
+              ;;
+            "specify path to script")
+              read -p 'Path to script: ' cli
+              if [[ "$cli" == *".sh"* ]]; then
+                cli=". $cli"
+              fi
+              break
+              ;;
+            "Quit")
+              break
+              ;;
+            *) echo "invalid option $REPLY";;
+          esac
+        done
         break
         ;;
       "REST")
         method="rest"
-        break
-        ;;
-      "specify path to script")
-        read -p 'Path to script: ' method
         break
         ;;
       "Quit")
@@ -60,17 +82,24 @@ then
     esac
   done
 else
-  PS3='c-lightning or shell script? (type the corresponding number):'
-  options=("cli" "specify path to script")
+  PS3='c-lightning btcpayserver or shell script? (type the corresponding number):'
+  options=("c-lightning" "btcpayserver (docker)" "specify path to script")
   select opt in "${options[@]}"
   do
     case $opt in
-      "cli")
-        method="cli"
+      "c-lightning")
+        cli="c-lightning"
+        break
+        ;;
+      "btcpayserver (docker)")
+        cli="docker exec btcpayserver_clightning_bitcoin lightning-cli --rpc-file /root/.lightning/lightning-rpc"
         break
         ;;
       "specify path to script")
-        read -p 'Path to script: ' method
+        read -p 'Path to script: ' cli
+        if [[ "$cli" == *".sh"* ]]; then
+          cli=". $cli"
+        fi
         break
         ;;
       "Quit")
@@ -111,8 +140,8 @@ config=$(echo "${peers[@]}" | jq -s \
   --arg password "$password" \
   --arg url "$url" \
   --arg implementation "$implementation" \
-  --arg method "$method" \
   --arg cli "$cli" \
+  --arg method "$method" \
   --arg rest_url "$rest_url" \
   --arg macaroon "$macaroon" \
   --arg tlscert "$tlscert" \

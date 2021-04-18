@@ -21,9 +21,6 @@ then
   tlscert=$(echo "$config" | jq -r '.tlscert' | tr -d '"')
 else
   cli=$(echo "$config" | jq -r '.cli' | tr -d '"')
-  if [[ "$cli" == *".sh"* ]]; then
-    cli=". $cli"
-  fi
 fi
 
 if [[ "$implementation" == 'c-lightning' ]]
