@@ -1,5 +1,7 @@
 #!/bin/bash
 
+cd "$( dirname "${BASH_SOURCE[0]}" )/."
+
 echo "{"
 
 config_file=ringOfFireConfig.json
@@ -65,9 +67,9 @@ echo "\"peers\": ["
 echo "$peers" | while read peer; do
   if [ "$last" != "$peer" ]
   then
-    echo "$peer,"
+    echo "\"$peer\","
   else
-    echo "$peer"
+    echo "\"$peer\""
   fi
 done
 echo "],"
