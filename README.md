@@ -7,44 +7,9 @@
 `sudo apt-get install jq`
 
 ### Configurations 
-Copy `ringOfFireConfig.dist.json` and name it `ringOfFireConfig.json`
+Execute the configuration script. It will guide you through the configurations.
 
-Replace placeholders with real values
-
-```
-{
-  "auth": {
-    "user": "USERNAME",
-    "password": "PASSWORD"
-  },
-  "url": "URL_TO_SERVER",
-  "implementation": "lnd|c-lightning",
-  "cli": "lncli|c-lightning|/path/to/your/cli",
-  "method": "rest",
-  "restUrl": "https://127.0.0.1:8080",
-  "macaroon": "PATH/TO/readonly.macaroon",
-  "tlscert": "PATH/TO/tls.cert",
-  "peers": [
-    "PUBLIC_KEY_OF_RING_PEER1@ADDRESS",
-    "PUBLIC_KEY_OF_RING_PEER2@ADDRESS",
-    "PUBLIC_KEY_OF_RING_PEER3@ADDRESS",
-    "..."
-  ]
-}
-
-
-```
-- auth
-  - user: your username you received from the coordinator
-  - password. your password you received from the coordinator
-- url: url of the server used for data sharing
-- implementation: your lightning implementation (`lnd` or `c-lightning`)
-- peers: Address (nodeid@address:port) to all your direct peers of the ring
-- implementation: (optional, default: `lnd`) your lightning implementation (currently supported lnd & c-lightning)
-- cli: (optional, default lnd or `c-lightning`) specify the command to your cli ([background](https://docs.btcpayserver.org/LightningNetwork/#c-lightning-commands-lightning-cli))
-- method: (optional, default: `cli`) can be specified as `rest` to execute commands to the lnd REST API
-- restUrl: (if method is `rest`) url to your rest API
-- tlscert: (if method is `rest`) the path to the tlscertificate
+`./config.sh`
 ## Execution
 
 Make sure you have access to `lncli` or `lightning-cli`
