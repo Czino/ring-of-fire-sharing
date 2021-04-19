@@ -16,7 +16,7 @@ url=$(echo "$config" | jq -r '.url' | tr -d '"')
 
 while true
 do
-  ringStats=$(. getRingStats.sh | jq -r -c '.')
+  ringStats=$(./getRingStats.sh | jq -r -c '.')
   echo "$(date)Send ring status: $ringStats"
   curl -u "$user":"$password"  -X POST -H "Content-Type: application/json" -d "$ringStats"  "$url"
   sleep 600
