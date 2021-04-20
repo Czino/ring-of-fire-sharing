@@ -81,7 +81,7 @@ echo "$peers" | while read peer; do
 
   if [[ "$implementation" == 'c-lightning' ]]
   then
-    channels=$(${cli} listpeers "$node_id" | jq -r '.peers[]' | jq -r '.channels[0]' | jq -r --arg node_id "$node_id" '{ nodeId: $node_id, chan_id: .short_channel_id, local_balance: .spendable_msatoshi, remote_balance: .receivable_msatoshi }')
+    peerInfo=$(${cli} listpeers "$node_id" | jq -r '.peers[]' | jq -r '.channels[0]' | jq -r --arg node_id "$node_id" '{ nodeId: $node_id, chan_id: .short_channel_id, local_balance: .spendable_msatoshi, remote_balance: .receivable_msatoshi }')
   else
     if [[ "$method" == 'rest' ]]
     then
