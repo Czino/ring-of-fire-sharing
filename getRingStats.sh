@@ -50,7 +50,7 @@ peers=($(echo "$config" | jq -r '.peers' | tr -d '[],"'))
 ringPeers=()
 for node_id in "${peers[@]}"; do
   if [[ "$implementation" == 'c-lightning' ]]; then
-    peerInfo=$(${cli} listpeers "$node_id" | jq -r '.peers[]' | jq -r '.channels[0]' | jq -r --arg node_id "$node_id" '{ nodeId: $node_id, chan_id: .short_channel_id, local_balance: .spendable_msatoshi, remote_balance: .receivable_msatoshi }')
+    peerInfo=$(${cli} listpeers "$node_id" | jq -r '.peers[]' | jq -r '{ channel: .channels[0], active: .connected }' | jq -r --arg node_id "$node_id" '{ nodeId: $node_id, channel_point: (.channel.funding_txid + ":" + (.channel.short_channel_id | split("x"))[2]), local_balance: .channel.spendable_msatoshi, remote_balance: .channel.receivable_msatoshi, active: .active }')
   else
     if [[ "$method" == 'rest' ]]; then
       encoded_node_id=$(echo "$node_id" | xxd -r -p | base64)
@@ -58,7 +58,7 @@ for node_id in "${peers[@]}"; do
     else
       channels=$(${cli} listchannels --peer "$node_id")
     fi
-    peerInfo=$(echo "$channels" | jq -r --arg node_id "$node_id" '.channels[] | select(contains({"remote_pubkey": $node_id}))' | jq -r -c '{ nodeId: .remote_pubkey, chan_id: .chan_id, local_balance: ((.local_balance | tonumber) * 1000), remote_balance: ((.remote_balance | tonumber) * 1000), active: .active }')
+    peerInfo=$(echo "$channels" | jq -r '.channels[]' | jq -r -c '{ nodeId: .remote_pubkey, channel_point: .channel_point, local_balance: ((.local_balance | tonumber) * 1000), remote_balance: ((.remote_balance | tonumber) * 1000), active: .active }')
   fi
 
   if [ -n "$peerInfo" ]; then
