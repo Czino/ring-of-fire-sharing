@@ -10,6 +10,7 @@
 Execute the configuration script. It will guide you through the configurations.
 
 `./config.sh`
+
 `./install.sh`
 
 ## Execution
