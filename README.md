@@ -21,8 +21,12 @@ Execute the command as follows
 
 ## Run script as a service
 
-Use the following command to install the script as a service
+Use the following command to install the script as a service (you'll need root access)
 
 `./install.sh`
+
+or directly with root privileges
+
+`sudo bash ./install.sh`
 
 The script will now keep running 24/7 and automatically start when your node reboots
