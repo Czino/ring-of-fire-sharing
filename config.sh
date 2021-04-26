@@ -43,13 +43,17 @@ then
     case $opt in
       "cli")
         method="cli"
-        PS3='lncli btcpayserver or shell script? (type the corresponding number):'
-        options=("lncli" "btcpayserver (docker)" "specify path to script")
+        PS3='lncli, umbrel, btcpayserver or shell script? (type the corresponding number):'
+        options=("lncli" "umbrel" "btcpayserver (docker)" "specify path to script")
         select opt in "${options[@]}"
         do
           case $opt in
             "lncli")
               cli="lncli"
+              break
+              ;;
+            "umbrel")
+              cli="/home/umbrel/~umbrel/bin"
               break
               ;;
             "btcpayserver (docker)")
