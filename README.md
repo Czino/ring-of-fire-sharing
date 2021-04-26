@@ -30,3 +30,10 @@ or directly with root privileges
 `sudo bash ./install.sh`
 
 The script will now keep running 24/7 and automatically start when your node reboots
+
+
+## Check if it works
+
+The following log should show no error:
+
+`sudo journalctl -f -u ring-of-fire-sharing.service`
