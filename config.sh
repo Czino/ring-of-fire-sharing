@@ -53,7 +53,7 @@ then
               break
               ;;
             "umbrel")
-              cli="/home/umbrel/~umbrel/bin"
+              cli="/home/umbrel/~umbrel/bin/lncli"
               break
               ;;
             "btcpayserver (docker)")
