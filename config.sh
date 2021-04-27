@@ -15,7 +15,7 @@ echo
 read -p 'Server url: ' url
 
 PS3='Lightning Implementation (type the corresponding number):'
-options=("LND" "c-lightning")
+options=("LND" "c-lightning" "umbrel")
 select opt in "${options[@]}"
 do
   case $opt in
@@ -27,6 +27,11 @@ do
       implementation="c-lightning"
       break
       ;;
+    "umbrel")
+      implementation="umbrel"
+      cli="docker exec -it lnd lncli"
+      break
+      ;;
     "Quit")
       break
       ;;
@@ -34,8 +39,7 @@ do
   esac
 done
 
-if [[ "$implementation" == 'lnd' ]]
-then
+if [[ "$implementation" == 'lnd' ]]; then
   PS3='cli or REST API? (type the corresponding number):'
   options=("cli" "REST")
   select opt in "${options[@]}"
@@ -43,17 +47,13 @@ then
     case $opt in
       "cli")
         method="cli"
-        PS3='lncli, umbrel, btcpayserver or shell script? (type the corresponding number):'
-        options=("lncli" "umbrel" "btcpayserver (docker)" "specify path to script")
+        PS3='lncli, btcpayserver or shell script? (type the corresponding number):'
+        options=("lncli" "btcpayserver (docker)" "specify path to script")
         select opt in "${options[@]}"
         do
           case $opt in
             "lncli")
               cli="lncli"
-              break
-              ;;
-            "umbrel")
-              cli="/home/umbrel/umbrel/bin/lncli"
               break
               ;;
             "btcpayserver (docker)")
@@ -85,7 +85,7 @@ then
       *) echo "invalid option $REPLY";;
     esac
   done
-else
+elif [[ "$implementation" == 'c-lightning' ]]; then
   PS3='c-lightning btcpayserver or shell script? (type the corresponding number):'
   options=("c-lightning" "btcpayserver (docker)" "specify path to script")
   select opt in "${options[@]}"
@@ -112,6 +112,7 @@ else
       *) echo "invalid option $REPLY";;
     esac
   done
+
 fi
 
 if [[ "$method" == 'rest' ]]
