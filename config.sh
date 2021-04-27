@@ -29,7 +29,7 @@ do
       ;;
     "umbrel")
       implementation="umbrel"
-      cli="docker exec -it lnd lncli"
+      cli="docker exec lnd lncli"
       break
       ;;
     "Quit")
