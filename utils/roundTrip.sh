@@ -83,6 +83,12 @@ else
    hops=$(echo "$config" | jq -r '(.hops | reverse | join(","))' | tr -d '"')
   fi
 
+  echo "$hops"
+  if [[ $hops == "" ]]; then
+    echo "No hops yet defined. use configureHops.sh to add your hops!"
+    return
+  fi
+
   route=$("$cli" buildroute --amt "$amt" --hops "$hops")
   if [[ $route == *"error"* ]] || [ -n $route ]; then
     echo "Route could not be built!"
