@@ -37,3 +37,13 @@ The script will now keep running 24/7 and automatically start when your node reb
 The following log should show no error:
 
 `sudo journalctl -f -u ring-of-fire-sharing.service`
+
+
+# Tools
+
+## Add/Remove direct peers
+To avoid editing the JSON configuration or running the `config.sh` script again. You can use the following scripts to add/remove peers:
+
+`./addPeer.sh PUBLIC_KEY`
+
+`./removePeer.sh PUBLIC_KEY`
