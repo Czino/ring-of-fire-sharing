@@ -11,6 +11,7 @@ fi
 amt=1
 memo=""
 direction="right"
+stop=false
 
 _setArgs(){
   while [ "$1" != "" ]; do
@@ -21,7 +22,7 @@ _setArgs(){
         echo "--amt,             (optional, default: 1) amount in sats to route"
         echo "--amt,             (optional) memo of invoice"
         echo "-d, --direction    (optional, default: right) route to the left or right"
-        return
+        stop=true
         ;;
       "--amt")
         shift
@@ -41,6 +42,10 @@ _setArgs(){
 }
 
 _setArgs $*
+
+if "$stop"; then
+  return
+fi
 
 config=$(jq -c '.' "$config_file")
 implementation=$(echo "$config" | jq -r '.implementation' | tr -d '"')
