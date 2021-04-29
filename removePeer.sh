@@ -8,7 +8,10 @@ if [ ! -f "$config_file" ]; then
   return
 fi
 
-read -p 'Node id of new peer: ' peer
+peer="$1"
+while [ ! -n "$peer" ]; do
+  read -p 'Node id of new peer: ' peer
+done
 
 entry=$(jq --arg peer "$peer" '.peers[] | select(. == $peer)' "$config_file")
 if [ ! -n "$entry" ]; then
