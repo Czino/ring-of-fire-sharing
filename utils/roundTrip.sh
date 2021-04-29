@@ -20,7 +20,7 @@ _setArgs(){
         echo "options:"
         echo "-h, --help         show brief help"
         echo "--amt,             (optional, default: 1) amount in sats to route"
-        echo "--amt,             (optional) memo of invoice"
+        echo "--memo,             (optional) memo of invoice"
         echo "-d, --direction    (optional, default: right) route to the left or right"
         stop=true
         ;;
