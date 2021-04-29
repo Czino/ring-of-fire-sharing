@@ -12,3 +12,4 @@ read -p 'Node id of new peer: ' peer
 
 config=$(jq --arg peer "$peer" '.peers += [$peer]' "$config_file")
 echo "$config" | tee "$config_file" >/dev/null
+echo "$peer has been added"
