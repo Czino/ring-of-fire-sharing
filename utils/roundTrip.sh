@@ -1,17 +1,12 @@
 #!/bin/bash
 
-cd "$( dirname "${BASH_SOURCE[0]}" )/."
-
-config_file=../ringOfFireConfig.json
-if [ ! -f "$config_file" ]; then
-  echo "$config_file does not exists."
-  return
-fi
+cd "$( dirname "${BASH_SOURCE[0]}" )/.."
 
 amt=1
 memo=""
 direction="right"
 stop=false
+config_file=""
 
 _setArgs(){
   while [ "$1" != "" ]; do
@@ -20,8 +15,9 @@ _setArgs(){
         echo "options:"
         echo "-h, --help         show brief help"
         echo "--amt,             (optional, default: 1) amount in sats to route"
-        echo "--memo,             (optional) memo of invoice"
+        echo "--memo,            (optional) memo of invoice"
         echo "-d, --direction    (optional, default: right) route to the left or right"
+        echo "-c, --config       (optional) define config file to load"
         stop=true
         ;;
       "--amt")
@@ -36,6 +32,10 @@ _setArgs(){
         shift
         direction="$1"
         ;;
+      "-c" | "--config")
+        shift
+        config_file="$1"
+        ;;
     esac
     shift
   done
@@ -44,6 +44,14 @@ _setArgs(){
 _setArgs $*
 
 if "$stop"; then
+  return
+fi
+
+if [ ! -n "$config_file" ]; then
+  config_file=$(./getConfig.sh)
+fi
+if [[ "$config_file" == *"Error"* ]] || [ ! -n "$config_file" ] || [ ! -f "$config_file" ]; then
+  echo "$config_file does not exists."
   return
 fi
 

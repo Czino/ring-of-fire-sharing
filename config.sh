@@ -1,6 +1,12 @@
 #!/bin/bash
 
-config_file=ringOfFireConfig.json
+read -p 'Ring name: ' ring
+name=$(echo "$ring" | sed 's/["\n]//g')
+ring=$(echo "$ring" | sed 's/[^a-zA-Z0-9]//g')
+
+echo "$ring"
+
+config_file="rings/$ring.json"
 if [ -f "$config_file" ]; then
   read -p "$config_file already exists, overwrite [Y/N]? " -n 1 -r
   echo
@@ -11,7 +17,6 @@ fi
 
 read -p 'Username: ' user
 read -s -p 'Password: ' password
-echo
 read -p 'Server url: ' url
 
 PS3='Lightning Implementation (type the corresponding number):'
@@ -140,7 +145,9 @@ while [ -n "$peer" ]; do
   fi
 done
 
+
 config=$(echo "${peers[@]}" | jq -s \
+  --arg name "$name" \
   --arg user "$user" \
   --arg password "$password" \
   --arg url "$url" \
@@ -150,5 +157,6 @@ config=$(echo "${peers[@]}" | jq -s \
   --arg rest_url "$rest_url" \
   --arg macaroon "$macaroon" \
   --arg tlscert "$tlscert" \
-  '{ peers: ., auth: { user: $user, password: $password }, url: $url, implementation: $implementation, cli: $cli, method: $method, rest_url: $rest_url, macaroon: $macaroon, tlscert: $tlscert }' )
+  '{ name: $name, peers: ., auth: { user: $user, password: $password }, url: $url, implementation: $implementation, cli: $cli, method: $method, rest_url: $rest_url, macaroon: $macaroon, tlscert: $tlscert }' )
 echo "$config" | tee "$config_file" >/dev/null
+
