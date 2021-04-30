@@ -8,6 +8,7 @@ memo=""
 direction="right"
 stop=false
 config_file=""
+probe= false
 
 _setArgs(){
   while [ "$1" != "" ]; do
@@ -41,6 +42,12 @@ _setArgs(){
         shift
         config_file="$1"
         ;;
+      "-p" | "--probe")
+        shift
+        probe= true
+        ;;
+
+
     esac
     shift
   done
@@ -100,19 +107,21 @@ else
     echo "No hops yet defined. use configureHops.sh to add your hops!"
     return
   fi
-echo $hops
+
+
   route=$("$cli" buildroute --amt "$amt" --hops "$hops")
-  echo $route
+
   if [[ $route == *"error"* ]] || [ -n $route ]; then
     echo "Route could not be built!"
   else
-    echo "The route is available!"
-    # removing this : relevant for payment only
-    # invoice=$("$cli" addinvoice --amt "$amt" --memo "$memo")
-    # payment_hash=$(echo "$invoice" | jq -r '.r_hash')
-    # payment_addr=$(echo "$invoice" | jq -r '.payment_addr')
-
-    #payment_result=$(echo "$route" | jq -r --arg amt_msats "$amt_msats" --arg payment_addr "$payment_addr" '(.route.hops[-1] | .mpp_record) |= {payment_addr:$payment_addr, total_amt_msat: $amt_msats}' | "$cli" sendtoroute --payment_hash="$payment_hash" -)
-    #echo "$payment_result"
+    if $probe; then
+      echo "Dry probing! "
+      echo "The route is available!"
+      echo "with hops :" $hops
+      echo " "
+      echo "and route as defined as :" $route
+    else
+    echo $route
+    fi
   fi
 fi
