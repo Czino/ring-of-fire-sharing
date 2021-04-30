@@ -87,6 +87,8 @@ else
     node_info=$(${cli} getinfo)
   fi
 
+  my_node_id=$(echo "$node_info" | jq -r '.identity_pubkey')
+
   if [[ "$direction" == 'right' ]]; then
    hops=$(echo "$config" | jq -r '(.hops | join(","))' | tr -d '"')
   else
@@ -98,7 +100,7 @@ else
     return
   fi
 
-  route=$("$cli" buildroute --amt "$amt" --hops "$hops")
+  route=$("$cli" buildroute --amt "$amt" --hops "$hops,$my_node_id")
   if [[ $route == *"error"* ]] || [ -n $route ]; then
     echo "Route could not be built!"
   else
