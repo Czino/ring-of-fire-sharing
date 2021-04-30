@@ -53,7 +53,7 @@ To avoid editing the JSON configuration or running the `config.sh` script again.
 
 Run this script which will prompt you to name your old config
 
-`./getConfig.sh`
+`sudo bash getConfig.sh`
 
 Run the install script again
 
