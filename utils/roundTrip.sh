@@ -47,6 +47,8 @@ if "$stop"; then
   return
 fi
 
+amt_msats=$(expr $amt \* 1000)
+
 config=$(jq -c '.' "$config_file")
 implementation=$(echo "$config" | jq -r '.implementation' | tr -d '"')
 method=$(echo "$config" | jq -r '.method' | tr -d '"')
@@ -97,7 +99,7 @@ else
     payment_hash=$(echo "$invoice" | jq -r '.r_hash')
     payment_addr=$(echo "$invoice" | jq -r '.payment_addr')
 
-    payment_result=$(echo "$route" | jq -r --arg amt "$amt" --arg payment_addr "$payment_addr" '(.route.hops[-1] | .mpp_record) |= {payment_addr:$payment_addr, total_amt_msat: $amt}' | "$cli" sendtoroute --payment_hash="$payment_hash" -)
+    payment_result=$(echo "$route" | jq -r --arg amt_msats "$amt_msats" --arg payment_addr "$payment_addr" '(.route.hops[-1] | .mpp_record) |= {payment_addr:$payment_addr, total_amt_msat: $amt_msats}' | "$cli" sendtoroute --payment_hash="$payment_hash" -)
     echo "$payment_result"
   fi
 fi
