@@ -1,0 +1,118 @@
+#!/bin/bash
+# my first encounter with bash so I am probably wrong in 90%
+#copying out most of original roundTrip.sh
+cd "$( dirname "${BASH_SOURCE[0]}" )/.."
+
+amt=1
+memo=""
+direction="right"
+stop=false
+config_file=""
+
+_setArgs(){
+  while [ "$1" != "" ]; do
+    case $1 in
+      "-h" | "--help")
+        echo "options:"
+        echo "-h, --help         show brief help"
+        # needed for call when using for payment
+        echo "--amt,             (optional, default: 1) amount in sats to route"
+        # makes no sense here
+        # echo "--memo,            (optional) memo of invoice"
+        echo "-d, --direction    (optional, default: right) route to the left or right"
+        echo "-c, --config       (optional) define config file to load"
+        # thinking about putting in flag -dry which would echo intermediaries, if not dry would only return route?
+        stop=true
+        ;;
+      "--amt")
+        shift
+        amt="$1"
+        ;;
+        # Not needed here
+      # "--memo")
+      #   shift
+      #   memo="$1"
+      #   ;;
+      "-d" | "--direction")
+        shift
+        direction="$1"
+        ;;
+      "-c" | "--config")
+        shift
+        config_file="$1"
+        ;;
+    esac
+    shift
+  done
+}
+
+_setArgs $*
+
+if "$stop"; then
+  return
+fi
+
+if [ ! -n "$config_file" ]; then
+  config_file=$(./getConfig.sh)
+fi
+if [[ "$config_file" == *"Error"* ]] || [ ! -n "$config_file" ] || [ ! -f "$config_file" ]; then
+  echo "$config_file does not exists."
+  return
+fi
+
+config=$(jq -c '.' "$config_file")
+implementation=$(echo "$config" | jq -r '.implementation' | tr -d '"')
+method=$(echo "$config" | jq -r '.method' | tr -d '"')
+if [[ "$method" == 'rest' ]]; then
+  macaroon=$(echo "$config" | jq -r '.macaroon' | tr -d '"')
+  MACAROON_HEADER="Grpc-Metadata-macaroon: $(xxd -ps -u -c 1000 $macaroon)"
+  rest_url=$(echo "$config" | jq -r '.restUrl' | tr -d '"')
+  tlscert=$(echo "$config" | jq -r '.tlscert' | tr -d '"')
+else
+  cli=$(echo "$config" | jq -r '.cli' | tr -d '"')
+fi
+
+if [[ "$implementation" == 'c-lightning' ]]; then
+  if [[ "$cli" == 'null' || "$cli" == '' ]]; then
+    cli="lightning-cli"
+  fi
+
+  #node_info=$(${cli} getinfo)
+  #my_node_id=$(echo "$node_info" | jq -r '.id')
+  echo "Sorry, c-lightning is not yet supported"
+else
+  if [[ "$method" == 'rest' ]]; then
+    node_info=$(curl -s -X GET --cacert "$tlscert" --header "$MACAROON_HEADER" "$rest_url"/v1/getinfo)
+  else
+    if [[ "$cli" == 'null' || "$cli" == '' ]]; then
+      cli="lncli"
+    fi
+    node_info=$(${cli} getinfo)
+  fi
+
+  if [[ "$direction" == 'right' ]]; then
+   hops=$(echo "$config" | jq -r '(.hops | join(","))' | tr -d '"')
+  else
+   hops=$(echo "$config" | jq -r '(.hops | reverse | join(","))' | tr -d '"')
+  fi
+
+  if [[ $hops == "" ]]; then
+    echo "No hops yet defined. use configureHops.sh to add your hops!"
+    return
+  fi
+echo $hops
+  route=$("$cli" buildroute --amt "$amt" --hops "$hops")
+  echo $route
+  if [[ $route == *"error"* ]] || [ -n $route ]; then
+    echo "Route could not be built!"
+  else
+    echo "The route is available!"
+    # removing this : relevant for payment only
+    # invoice=$("$cli" addinvoice --amt "$amt" --memo "$memo")
+    # payment_hash=$(echo "$invoice" | jq -r '.r_hash')
+    # payment_addr=$(echo "$invoice" | jq -r '.payment_addr')
+
+    #payment_result=$(echo "$route" | jq -r --arg amt_msats "$amt_msats" --arg payment_addr "$payment_addr" '(.route.hops[-1] | .mpp_record) |= {payment_addr:$payment_addr, total_amt_msat: $amt_msats}' | "$cli" sendtoroute --payment_hash="$payment_hash" -)
+    #echo "$payment_result"
+  fi
+fi
