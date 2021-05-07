@@ -2,9 +2,37 @@
 
 cd "$( dirname "${BASH_SOURCE[0]}" )/."
 
-config_file=ringOfFireConfig.json
+stop=false
+config_file=""
 
-if [ ! -f "$config_file" ]; then
+_setArgs(){
+  while [ "$1" != "" ]; do
+    case $1 in
+      "-h" | "--help")
+        echo "options:"
+        echo "-h, --help         show brief help"
+        echo "-c, --config       (optional) define config file to load"
+        stop=true
+        ;;
+      "-c" | "--config")
+        shift
+        config_file="$1"
+        ;;
+    esac
+    shift
+  done
+}
+
+_setArgs $*
+
+if "$stop"; then
+  return
+fi
+
+if [ ! -n "$config_file" ]; then
+  config_file=$(./getConfig.sh)
+fi
+if [[ "$config_file" == *"Error"* ]] || [ ! -n "$config_file" ] || [ ! -f "$config_file" ]; then
   echo "$config_file does not exists."
   return
 fi
@@ -16,7 +44,7 @@ url=$(echo "$config" | jq -r '.url' | tr -d '"')
 
 while true
 do
-  ringStats=$(./getRingStats.sh | jq -r -c '.')
+  ringStats=$(./getRingStats.sh --config "$config_file" | jq -r -c '.')
   echo "$(date)Send ring status: $ringStats"
   curl -u "$user":"$password"  -X POST -H "Content-Type: application/json" -d "$ringStats"  "$url"
   sleep 600

@@ -47,3 +47,22 @@ To avoid editing the JSON configuration or running the `config.sh` script again.
 `./addPeer.sh PUBLIC_KEY`
 
 `./removePeer.sh PUBLIC_KEY`
+
+
+# Upgrade from v0.0.1
+
+Run this script which will prompt you to name your old config
+
+`sudo bash getConfig.sh`
+
+Run the install script again
+
+`./install.sh`
+
+and remove old service files
+
+```
+sudo systemctl stop ring-of-fire-sharing.service
+sudo systemctl disable ring-of-fire-sharing.service
+sudo rm /etc/systemd/system/ring-of-fire-sharing.service
+```

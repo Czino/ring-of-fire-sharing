@@ -1,10 +1,5 @@
-#!/bin/bash
-
-cd "$( dirname "${BASH_SOURCE[0]}" )/."
-
 stop=false
 config_file=""
-peer=""
 
 _setArgs(){
   while [ "$1" != "" ]; do
@@ -13,16 +8,11 @@ _setArgs(){
         echo "options:"
         echo "-h, --help         show brief help"
         echo "-c, --config       (optional) define config file to load"
-        echo "-p, --peer         (optional) the peer to remove"
         stop=true
         ;;
       "-c" | "--config")
         shift
         config_file="$1"
-        ;;
-      "-p" | "--peer")
-        shift
-        peer="$1"
         ;;
     esac
     shift
@@ -43,15 +33,10 @@ if [[ "$config_file" == *"Error"* ]] || [ ! -n "$config_file" ] || [ ! -f "$conf
   return
 fi
 
-while [ ! -n "$peer" ]; do
-  read -p 'Node id of new peer: ' peer
-done
+ring=$(echo "$config_file" | sed 's/rings\///' | sed 's/.json//')
 
-entry=$(jq --arg peer "$peer" '.peers[] | select(. == $peer)' "$config_file")
-if [ ! -n "$entry" ]; then
-  echo "$peer is not in the list"
-else
-  config=$(jq --arg peer "$peer" 'del(.peers[] | select(. == $peer))' "$config_file")
-  echo "$peer has been removed"
-  echo "$config" | tee "$config_file" >/dev/null
-fi
+
+systemctl stop "ring-of-fire-sharing-${ring}.service"
+systemctl disable "ring-of-fire-sharing-${ring}.service"
+
+rm "/etc/systemd/system/ring-of-fire-sharing-${ring}.service"

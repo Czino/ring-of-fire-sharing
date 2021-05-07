@@ -1,4 +1,42 @@
+stop=false
+config_file=""
+
+_setArgs(){
+  while [ "$1" != "" ]; do
+    case $1 in
+      "-h" | "--help")
+        echo "options:"
+        echo "-h, --help         show brief help"
+        echo "-c, --config       (optional) define config file to load"
+        stop=true
+        ;;
+      "-c" | "--config")
+        shift
+        config_file="$1"
+        ;;
+    esac
+    shift
+  done
+}
+
+_setArgs $*
+
+if "$stop"; then
+  return
+fi
+
+if [ ! -n "$config_file" ]; then
+  config_file=$(./getConfig.sh)
+fi
+if [[ "$config_file" == *"Error"* ]] || [ ! -n "$config_file" ] || [ ! -f "$config_file" ]; then
+  echo "$config_file does not exists."
+  return
+fi
+
+ring=$(echo "$config_file" | sed 's/rings\///' | sed 's/.json//')
 working_folder=$(pwd | sed -e "s|\/|\\\/|g")
+arguments=$(echo "-c $config_file" | sed -e "s|\/|\\\/|g")
+
 user=$(whoami)
 
 PS3='Lightning Implementation (type the corresponding number):'
@@ -17,10 +55,6 @@ do
       user="lnd"
       break
       ;;
-    "umbrel")
-      user="umbrel"
-      break
-      ;;
     "other (specify)")
       read -p 'User for lightning: ' user
       break
@@ -34,9 +68,10 @@ done
 
 cat ./ring-of-fire-sharing.service \
 | sed -e "s/\$PWD/$working_folder/" \
+| sed -e "s/\$ARGS/$arguments/" \
 | sed -e "s/\$USER/$user/" \
-| tee /etc/systemd/system/ring-of-fire-sharing.service >/dev/null
+| tee "/etc/systemd/system/ring-of-fire-sharing-${ring}.service" >/dev/null
 
 systemctl daemon-reload
-systemctl start ring-of-fire-sharing.service
-systemctl enable ring-of-fire-sharing.service
+systemctl start "ring-of-fire-sharing-${ring}.service"
+systemctl enable "ring-of-fire-sharing-${ring}.service"

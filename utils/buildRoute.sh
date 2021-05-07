@@ -1,5 +1,6 @@
 #!/bin/bash
-
+# my first encounter with bash so I am probably wrong in 90%
+#copying out most of original roundTrip.sh
 cd "$( dirname "${BASH_SOURCE[0]}" )/.."
 
 amt=1
@@ -7,6 +8,7 @@ memo=""
 direction="right"
 stop=false
 config_file=""
+probe= false
 
 _setArgs(){
   while [ "$1" != "" ]; do
@@ -14,20 +16,24 @@ _setArgs(){
       "-h" | "--help")
         echo "options:"
         echo "-h, --help         show brief help"
+        # needed for call when using for payment
         echo "--amt,             (optional, default: 1) amount in sats to route"
-        echo "--memo,            (optional) memo of invoice"
+        # makes no sense here
+        # echo "--memo,            (optional) memo of invoice"
         echo "-d, --direction    (optional, default: right) route to the left or right"
         echo "-c, --config       (optional) define config file to load"
+        # thinking about putting in flag -dry which would echo intermediaries, if not dry would only return route?
         stop=true
         ;;
       "--amt")
         shift
         amt="$1"
         ;;
-      "--memo")
-        shift
-        memo="$1"
-        ;;
+        # Not needed here
+      # "--memo")
+      #   shift
+      #   memo="$1"
+      #   ;;
       "-d" | "--direction")
         shift
         direction="$1"
@@ -36,6 +42,12 @@ _setArgs(){
         shift
         config_file="$1"
         ;;
+      "-p" | "--probe")
+        shift
+        probe= true
+        ;;
+
+
     esac
     shift
   done
@@ -54,8 +66,6 @@ if [[ "$config_file" == *"Error"* ]] || [ ! -n "$config_file" ] || [ ! -f "$conf
   echo "$config_file does not exists."
   return
 fi
-
-amt_msats=$(expr $amt \* 1000)
 
 config=$(jq -c '.' "$config_file")
 implementation=$(echo "$config" | jq -r '.implementation' | tr -d '"')
@@ -87,8 +97,6 @@ else
     node_info=$(${cli} getinfo)
   fi
 
-  my_node_id=$(echo "$node_info" | jq -r '.identity_pubkey')
-
   if [[ "$direction" == 'right' ]]; then
    hops=$(echo "$config" | jq -r '(.hops | join(","))' | tr -d '"')
   else
@@ -100,17 +108,20 @@ else
     return
   fi
 
-  route=$("$cli" buildroute --amt "$amt" --hops "$hops,$my_node_id")
+
+  route=$("$cli" buildroute --amt "$amt" --hops "$hops")
+
   if [[ $route == *"error"* ]] || [ -n $route ]; then
     echo "Route could not be built!"
   else
-    echo "The route is available!"
-    invoice=$("$cli" addinvoice --amt "$amt" --memo "$memo")
-    payment_hash=$(echo "$invoice" | jq -r '.r_hash')
-    payment_addr=$(echo "$invoice" | jq -r '.payment_addr')
-
-    payment_result=$(echo "$route" | jq -r --arg amt_msats "$amt_msats" --arg payment_addr "$payment_addr" '(.route.hops[-1] | .mpp_record) |= {payment_addr:$payment_addr, total_amt_msat: $amt_msats}' | "$cli" sendtoroute --payment_hash="$payment_hash" -)
-    echo "$payment_result"
+    if $probe; then
+      echo "Dry probing! "
+      echo "The route is available!"
+      echo "with hops :" $hops
+      echo " "
+      echo "and route as defined as :" $route
+    else
+    echo $route
+    fi
   fi
 fi
-
