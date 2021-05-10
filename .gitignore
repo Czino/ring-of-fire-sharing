@@ -1,4 +1,6 @@
 ringOfFireConfig.json
 rings/*
+data/*
+!data/.gitkeep
 nohup.out
 .DS_Store

@@ -2,7 +2,7 @@
 Description=Send your node status periodically to the ring server
 
 [Service]
-ExecStart=$PWD/sendRingStats.sh $ARGS
+ExecStart=$PWD/saveRingStats.sh $ARGS
 Restart=on-failure
 User=$USER
 

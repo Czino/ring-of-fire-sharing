@@ -71,7 +71,8 @@ else
   my_node_id=$(echo "$node_info" | jq -r '.identity_pubkey')
   alias=$(echo "$node_info" | jq -r '.alias')
   color=$(echo "$node_info" | jq -r '.color')
-  feeReport=$(${cli} feereport | jq -r '.')
+  feeReport="[]"
+  #feeReport=$(${cli} feereport | jq -r '.')
 fi
 
 peers=($(echo "$config" | jq -r '.peers' | tr -d '[],"'))

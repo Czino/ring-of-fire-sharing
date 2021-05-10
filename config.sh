@@ -160,3 +160,16 @@ config=$(echo "${peers[@]}" | jq -s \
   '{ name: $name, peers: ., auth: { user: $user, password: $password }, url: $url, implementation: $implementation, cli: $cli, method: $method, rest_url: $rest_url, macaroon: $macaroon, tlscert: $tlscert }' )
 echo "$config" | tee "$config_file" >/dev/null
 
+urls=()
+url=true
+while [ -n "$url" ]; do
+  read -p 'URL of hidden RoF service (leave empty when done): ' url
+  if [ -n "$url" ]; then
+    urls+=( "\"$url\"" )
+  fi
+done
+
+config=$(jq '.' "$config_file")
+config=$(echo "${urls[@]}" | jq -s --argjson config "$config" '$config + {"urls": .}')
+echo "$config" | tee "$config_file" >/dev/null
+echo "Hops configured"
