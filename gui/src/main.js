@@ -18,6 +18,10 @@ const baseUrl = `${window.location.protocol}//${window.location.hostname}`
       rings,
       baseUrl,
       view: 'dashboard',
+      newRing: {
+        name: '',
+        hops: ['']
+      },
       createInvoice: {
         amt: 0
       }

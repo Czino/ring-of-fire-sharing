@@ -154,7 +154,25 @@ app.get('/', (req, res) => {
 
 app.get('/getRings', async (req, res) => {
   res.setHeader('Content-Type', 'application/json')
-  res.send(config.rings)
+  let rings = fs.readdirSync('../rings')
+    .filter(file => /json/.test(file))
+    .map(file => file.replace('.json', ''))
+  res.send(rings)
+})
+
+app.post('/addRing', async (req, res) => {
+  const name = req.body.name
+  const ring = name.replace(/[^a-zA-Z0-9]/g, '')
+  const hops = req.body.hops
+  const json = {
+    name,
+    hops
+  }
+  fs.writeFile(path.join(__dirname, `../rings/${ring}.json`), JSON.stringify(json), (err, data) => {
+    res.setHeader('Content-Type', 'application/json')
+    json.id = ring
+    res.send(json)
+  })
 })
 
 app.get('/getRingConfig', async (req, res) => {
