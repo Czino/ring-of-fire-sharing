@@ -1,0 +1,7 @@
+*.macaroon
+node_modules
+config.js
+
+.cache
+.parcel-cache
+dist
