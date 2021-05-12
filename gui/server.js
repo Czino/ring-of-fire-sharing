@@ -66,7 +66,68 @@ class LND {
     })
     return JSON.stringify(data);
   }
+  buildRoute = async ({ hops, channelId, amt}) => {
+    let url = `${this.url}/v2/router/route`
+      let requestBody = { 
+        amt_msat: String((amt || 1) * 1000),
+        outgoing_chan_id: channelId,
+        hop_pubkeys: hops.map(hop => Buffer.from(hop, 'hex').toString('base64')),
+    }
+    const data = await request({
+      url,
+      headers: {
+        'Grpc-Metadata-macaroon': this.macaroon,
+        'Content-Type': 'application/json'
+      },
+      rejectUnauthorized: false,
+      json: true,
+      method: 'POST',
+      form: JSON.stringify(requestBody),
+    })
+    return JSON.stringify(data);
+  }
+  addInvoice = async ({ amt, memo, expiry }) => {
+    let url = `${this.url}/v1/invoices`
+      let requestBody = {
+        value: amt,
+        memo,
+        expiry: expiry || 3600
+    }
+    const data = await request({
+      url,
+      headers: {
+        'Grpc-Metadata-macaroon': this.macaroon,
+        'Content-Type': 'application/json'
+      },
+      rejectUnauthorized: false,
+      json: true,
+      method: 'POST',
+      form: JSON.stringify(requestBody),
+    })
+    return JSON.stringify(data);
+  }
+  sendToRoute = async ({ route, paymentHash}) => {
+    let url = `${this.url}/v2/router/route/send`
+      let requestBody = { 
+        route,
+        paymentHash
+    }
+    const data = await request({
+      url,
+      headers: {
+        'Grpc-Metadata-macaroon': this.macaroon,
+        'Content-Type': 'application/json'
+      },
+      rejectUnauthorized: false,
+      json: true,
+      method: 'POST',
+      form: JSON.stringify(requestBody),
+    })
+    return JSON.stringify(data);
+  }
 }
+
+const getRingConfig = ring => fs.readFileSync(path.join(__dirname, `../rings/${ring}.json`), { encoding: 'utf8'})
 
 const lnd = new LND({
   macaroon: config.lnd.macaroon,
@@ -76,6 +137,7 @@ const lnd = new LND({
 const app = express()
 
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }));
 
 app.use(express.static(
   __dirname,
@@ -90,12 +152,17 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, './dist/index.html'))
 })
 
-let ringConfig = {}
-app.get('/getConfig', async (req, res) => {
-  fs.readFile(path.join(__dirname, `../rings/${config.ring}.json`), { encoding: 'utf8'}, (err, data) => {
-    ringConfig = data
+app.get('/getRings', async (req, res) => {
+  res.setHeader('Content-Type', 'application/json')
+  res.send(config.rings)
+})
+
+app.get('/getRingConfig', async (req, res) => {
+  const ring = req.query.ring
+  fs.readFile(path.join(__dirname, `../rings/${ring}.json`), { encoding: 'utf8'}, (err, data) => {
+    data.id = ring
     res.setHeader('Content-Type', 'application/json')
-    res.send(ringConfig)
+    res.send(data)
   })
 })
 
@@ -129,6 +196,56 @@ app.get('/listChannels', async (req, res) => {
     res.send(channels)
   } catch (e) {
     res.send(e.error)
+  }
+})
+
+app.post('/buildRoute', async (req, res) => {
+  const hops = req.body.hops
+  const amt = req.body.amt || 10
+
+  res.setHeader('Content-Type', 'application/json')
+  try {
+    const route = await getCache('buildRoute', JSON.stringify(hops), 1 * 60 * 1000, async () => {
+      return await lnd.buildRoute({
+        hops,
+        amt
+      })
+    })
+    res.send(route)
+  } catch (e) {
+    res.send(e)
+  }
+})
+
+app.post('/addInvoice', async (req, res) => {
+  const amt = req.body.amt
+  const memo = req.body.memo
+
+  res.setHeader('Content-Type', 'application/json')
+  try {
+    const invoice = await lnd.addInvoice({
+      amt,
+      memo
+    })
+    res.send(invoice)
+  } catch (e) {
+    res.send(e)
+  }
+})
+
+app.post('/sendToRoute', async (req, res) => {
+  const route = req.body.route
+  const paymentHash = req.body.paymentHash
+
+  res.setHeader('Content-Type', 'application/json')
+  try {
+    const status = await lnd.sendToRoute({
+      route,
+      paymentHash
+    })
+    res.send(status)
+  } catch (e) {
+    res.send(e)
   }
 })
 

@@ -1,4 +1,5 @@
-export const changeView = (state, view) => ({
+export const changeView = (state, view, ring) => ({
   ...state,
-  view
+  view,
+  ring
 })
