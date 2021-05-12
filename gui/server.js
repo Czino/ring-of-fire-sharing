@@ -69,7 +69,7 @@ class LND {
   buildRoute = async ({ hops, channelId, amt}) => {
     let url = `${this.url}/v2/router/route`
       let requestBody = { 
-        amt_msat: String((amt || 1) * 1000),
+        amt_msat: String((parseInt(amt) || 1) * 1000),
         outgoing_chan_id: channelId,
         hop_pubkeys: hops.map(hop => Buffer.from(hop, 'hex').toString('base64')),
     }
@@ -205,7 +205,7 @@ app.post('/buildRoute', async (req, res) => {
 
   res.setHeader('Content-Type', 'application/json')
   try {
-    const route = await getCache('buildRoute', JSON.stringify(hops), 1 * 60 * 1000, async () => {
+    const route = await getCache('buildRoute', JSON.stringify(hops) + amt, 1 * 60 * 1000, async () => {
       return await lnd.buildRoute({
         hops,
         amt

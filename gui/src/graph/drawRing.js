@@ -1,7 +1,7 @@
 import Graph from './graph.js'
 import { addClass, removeClass } from '../htmlUtils'
 
-export const drawRing = (peers, myNode) => {
+export const drawRing = (peers, myNode, brokenNode) => {
   const $graph = document.getElementById('ringGraph')
   const context = $graph.getContext('2d')
   const $extraInfo = document.getElementById('extraInfo')
@@ -26,7 +26,11 @@ export const drawRing = (peers, myNode) => {
       peer.active = true
       nodes[peer.node.pub_key] = graph.node(x, y, size, peer.node.alias, 3)
       nodes[peer.node.pub_key].custom = peer
-      nodes[peer.node.pub_key].color = peer.active ? peer.node.color : '#ff9800'
+      if (brokenNode && brokenNode === peer.node.pub_key) {
+        nodes[peer.node.pub_key].color = '#f00'
+      } else {
+        nodes[peer.node.pub_key].color = peer.active ? peer.node.color : '#ff9800'
+      }
       nodes[peer.node.pub_key].opacity = peer.active ? 1 : .5
 
       nodes[peer.node.pub_key].onMouseEnter = peer => {
@@ -81,21 +85,21 @@ export const drawRing = (peers, myNode) => {
           connection.color = i === 0 ? nodes[peer.node.pub_key].color : nodes[nextPeer.node.pub_key].color
           connection.opacity = i === 0 ? nodes[peer.node.pub_key].opacity : nodes[nextPeer.node.pub_key].opacity
           connection.setWeight(i === 0 ? localScore : remoteScore)
-          connection.onMouseEnter = line => {
-            if (line.isActive) return
-            $extraInfo.innerHTML = `
-              <h1 class="text-xl">Balance</h1>
-              <p>Local: ${peer.local_balance} sats</p>
-              <p>Remote: ${peer.remote_balance} sats</p>
-            `
-            line.isActive = true
-            removeClass($extraInfo, 'hidden')
-          }
-          connection.onMouseLeave = line => {
-            $extraInfo.innerHTML = ''
-            line.isActive = false
-            addClass($extraInfo, 'hidden')
-          }
+          // connection.onMouseEnter = line => {
+          //   if (line.isActive) return
+          //   $extraInfo.innerHTML = `
+          //     <h1 class="text-xl">Balance</h1>
+          //     <p>Local: ${peer.local_balance} sats</p>
+          //     <p>Remote: ${peer.remote_balance} sats</p>
+          //   `
+          //   line.isActive = true
+          //   removeClass($extraInfo, 'hidden')
+          // }
+          // connection.onMouseLeave = line => {
+          //   $extraInfo.innerHTML = ''
+          //   line.isActive = false
+          //   addClass($extraInfo, 'hidden')
+          // }
         })
       return peer
     })

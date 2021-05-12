@@ -18,6 +18,9 @@ const baseUrl = `${window.location.protocol}//${window.location.hostname}`
       rings,
       baseUrl,
       view: 'dashboard',
+      createInvoice: {
+        amt: 0
+      }
     },
     view: state => (
       <div class="p-8">

@@ -6,12 +6,14 @@ let peers = []
 let ringConfig = {}
 let channels = []
 
-const buildRoute = (state, direction) => {
-  const amt = 10
+const buildRoute = (state, direction, amt) => {
   const hops = direction === 'clockwise' ? ringConfig.hops : ringConfig.hops.reverse()
   return [
     {
       ...state,
+      route: null,
+      invoice: null,
+      paymentStatus: null,
       buildRoute: true
     },
     Http({
@@ -23,7 +25,7 @@ const buildRoute = (state, direction) => {
         },
         body: JSON.stringify({
           amt,
-          hops
+          hops: hops.filter(hop => hop !== state.myNode.identity_pubkey)
         })
       },
       action(state, response) {
@@ -45,10 +47,21 @@ const buildRoute = (state, direction) => {
 ]
 }
 
+const setAmount = (state, event) => ({
+  ...state,
+  route: null,
+  error: null,
+  createInvoice: {
+    ...state.createInvoice,
+    amt: event.target.value
+  }
+})
 const addInvoice = (state, amt, memo, expiry) => {
   return [
     {
       ...state,
+      invoice: null,
+      paymentStatus: null,
       addInvoice: true
     },
     Http({
@@ -83,10 +96,11 @@ const addInvoice = (state, amt, memo, expiry) => {
 ]
 }
 
-const sendToRoute = (state) => {
+const sendToRoute = state => {
   return [
     {
       ...state,
+      paymentStatus: null,
       sendToRoute: true
     },
     Http({
@@ -122,6 +136,12 @@ const sendToRoute = (state) => {
 
 export const Ring = ({ state }) => {
   setTimeout(async () => {
+    let brokenNode
+    if (state.error) {
+      let matches = state.error.message.match(/[a-z0-9]{66}/i)
+      if (matches.length) brokenNode = matches[0]
+    }
+
     ringConfig = await fetch(`./getRingConfig?ring=${state.ring}`)
     ringConfig = await ringConfig.json()
     // ring = await fetch(`./getRingInfo?ring=${state.ring.id}`)
@@ -139,7 +159,7 @@ export const Ring = ({ state }) => {
     peers = await Promise.all(ringConfig.hops.map(peer => fetch(`./getNodeInfo?nodeId=${peer}`)))
     peers = await Promise.all(peers.map(peer => peer.json()))
 
-    drawRing(peers, state.myNode.identity_pubkey)
+    drawRing(peers, state.myNode.identity_pubkey, brokenNode)
   })
 
   if (!initialised) {
@@ -147,17 +167,31 @@ export const Ring = ({ state }) => {
   }
   initialised = true
 
-  console.log(state.error)
   return <div>
     <h3>Build route</h3>
-    <button disabled={state.buildRoute} onclick={state => buildRoute(state, 'clockwise')}>Clockwise</button>
-    <button disabled={state.buildRoute} onclick={state => buildRoute(state, 'counter-clockwise')}>Counter-clockwise</button>
+    <div>
+      <label for="buildRoute-amt" class="block text-sm">Sats:</label>
+      <input id="buildRoute-amt" type="number" value={state.createInvoice.amt} oninput={setAmount} class="w-20 p-2"/>
+    </div>
+
+    <div class="mt-4">
+      <button class="cursor-pointer bg-yellow-400 text-white p-4 border-0 hover:bg-yellow-500" disabled={state.buildRoute} onclick={state => buildRoute(state, 'clockwise', state.createInvoice.amt)}>
+        Clockwise
+      </button>
+      <button class="cursor-pointer bg-yellow-400 text-white p-4 border-0 hover:bg-yellow-500 ml-4" disabled={state.buildRoute} onclick={state => buildRoute(state, 'counter-clockwise', state.createInvoice.amt)}>
+        Counter-clockwise
+      </button>
+    </div>
     {state.route
       ? <div>
-        <p>Route available for {state.route.total_fees} sats!</p>
+        <p>Route available for sending {state.createInvoice.amt} sats with fees of {state.route.total_fees} sats!</p>
         { state.invoice
-          ? <button disabled={state.sendToRoute} onclick={state => sendToRoute(state, )}>Make round payment</button>
-          : <button disabled={state.addInvoice} onclick={state => addInvoice(state, 10, state.ring + ' roundpayment')}>Create Invoice of 10 sats</button>
+          ? <button class="cursor-pointer bg-yellow-400 text-white p-4 border-0 hover:bg-yellow-500" disabled={state.sendToRoute} onclick={state => sendToRoute(state)}>
+              Make round payment
+            </button>
+          : <button class="cursor-pointer bg-yellow-400 text-white p-3 border-0 hover:bg-yellow-500" disabled={state.addInvoice} onclick={state => addInvoice(state, state.createInvoice.amt, state.ring + ' roundpayment')}>
+            Create Invoice
+          </button>
         }
         {state.sendToRoute
           ? <p>Sit back, this might take a little while</p>
