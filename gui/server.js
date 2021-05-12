@@ -4,7 +4,19 @@ const path = require('path')
 const express = require('express')
 const http = require('http')
 const config = require('./config.js')
+const cache = {}
 
+const getCache = (type, id, ttl, callback) => {
+  if (!cache[type]) cache[type] = {}
+
+  if (!cache[type][id] || (new Date()).getTime() - cache[type][id].date.getTime() > ttl) {
+    cache[type][id] = {
+      date: new Date(),
+      data: callback()
+    }
+  }
+  return cache[type][id].data
+}
 class LND {
   constructor(options) {
     this.macaroon = fs.readFileSync(path.join(__dirname, options.macaroon)).toString('hex')
@@ -88,23 +100,33 @@ app.get('/getConfig', async (req, res) => {
 })
 
 app.get('/getInfo', async (req, res) => {
-  const info = await lnd.getInfo()
+  const info = await getCache('info', 'own', 30 * 60 * 1000, async () => {
+    return await lnd.getInfo()
+  })
+
   res.setHeader('Content-Type', 'application/json')
   res.send(info)
 })
+
+
 app.get('/getNodeInfo', async (req, res) => {
   const nodeId = req.query.nodeId
-  const info = await lnd.getNodeInfo(nodeId)
+  const nodeInfo = await getCache('nodeInfo', nodeId, 30 * 60 * 1000, async () => {
+    const info = await lnd.getNodeInfo(nodeId)
+    return info
+  })
   res.setHeader('Content-Type', 'application/json')
-  res.send(info)
+  res.send(nodeInfo)
 })
 
 app.get('/listChannels', async (req, res) => {
   const peer = req.query.peer
   res.setHeader('Content-Type', 'application/json')
   try {
-    const channel = await lnd.listChannels(peer)
-    res.send(channel)
+    const channels = await getCache('listChannels', peer || 'all', 10 * 60 * 1000, async () => {
+      return await lnd.listChannels(peer)
+    })
+    res.send(channels)
   } catch (e) {
     res.send(e.error)
   }
