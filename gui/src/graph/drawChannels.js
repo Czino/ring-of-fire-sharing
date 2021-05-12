@@ -1,12 +1,12 @@
 import Graph from './graph.js'
 import { addClass, removeClass } from '../htmlUtils'
 
-const $graph = document.getElementById('graph')
-const context = $graph.getContext('2d')
-const $extraInfo = document.getElementById('extraInfo')
-const copyText = document.getElementById('copy-text')
-
 export const drawChannels = (channels, myNode) => {
+  const $graph = document.getElementById('graph')
+  const context = $graph.getContext('2d')
+  const $extraInfo = document.getElementById('extraInfo')
+  const copyText = document.getElementById('copy-text')
+
   $graph.width = $graph.clientWidth
   $graph.height = $graph.clientHeight
   context.clearRect(0, 0, $graph.width, $graph.height);
