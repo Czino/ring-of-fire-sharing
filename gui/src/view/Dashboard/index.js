@@ -149,7 +149,7 @@ export const Dashboard = ({ state }) => {
             Synced to graph: <strong>{state.myNode.synced_to_graph ? '✓' : 'no'}</strong>
           </div>
         </div>
-        <h2 class="text-l">Channels</h2>
+        <h2 class="text-l">Balance</h2>
         <div class="leading-8">
           <div class="flex">
             <div class="w-1/2 text-center">
