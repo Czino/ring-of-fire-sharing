@@ -88,14 +88,14 @@ export const Dashboard = ({ state }) => <div>
       </ul>
       <h3>Add ring</h3>
       <form onsubmit={addRing} class="w-1/2 grid grid-cols-1 gap-2">
-        <input type="text" class="p-2" placeholder="Ring name" oninput={setRingName} autofocus/>
+        <input type="text" class="p-2 border border-yellow-400" placeholder="Ring name" oninput={setRingName} autofocus/>
         <p class="text-sm mt-4 mb-0">Hops (Make sure to add hops in ring order)</p>
         {state.newRing.hops.map((hop, i, arr) => 
-          <input type="text" id={`newRing-hop-${i}`} value={hop} class="p-2" placeholder={`Hop ${i+1}`} oninput={(state, event) => setHop(state, event, i)} />)
+          <input type="text" id={`newRing-hop-${i}`} value={hop} class="p-2 border border-yellow-400" placeholder={`Hop ${i+1}`} oninput={(state, event) => setHop(state, event, i)} />)
         }
         <div>
-          <button type="button" class="w-6 h-6 cursor-pointer bg-gray-400 text-white border-0 hover:bg-yellow-500" onClick={state => removeHop(state)} tabindex="-1">-</button>
-          <button type="button" class="w-6 h-6 cursor-pointer bg-gray-400 text-white border-0 hover:bg-yellow-500 ml-2" onfocus={state => addHop(state)} onClick={state => addHop(state)}>+</button>
+          <button type="button" class="w-6 h-6 cursor-pointer text-white border-0 bg-gray-400 hover:bg-yellow-500" onClick={state => removeHop(state)} tabindex="-1">-</button>
+          <button type="button" class="w-6 h-6 cursor-pointer text-white border-0 bg-gray-400 hover:bg-yellow-500 ml-2" onfocus={state => addHop(state)} onClick={state => addHop(state)}>+</button>
         </div>
         <button type="submit" class="mt-4 cursor-pointer bg-yellow-400 text-white px-4 py-2 border-0 hover:bg-yellow-500" disabled={state.addRing}>
           Add

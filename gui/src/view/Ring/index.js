@@ -221,14 +221,14 @@ export const Ring = ({ state }) => {
   return <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
     <h2 class="lg:col-span-4">{state.ring}</h2>
     <div class="lg:col-span-1">
-      <h3>Options</h3>
+      <h3 class="text-l">Options</h3>
       <button class={{'cursor-pointer bg-yellow-400 text-white px-4 py-2 border-0 hover:bg-yellow-500': true, 'opacity-50': state.delete}} disabled={state.delete} onclick={state => deleteRing(state, state.ring)}>
         Delete
       </button>
-      <h3>Build route</h3>
+      <h3 class="text-l">Build route</h3>
       <div>
         <label for="buildRoute-amt" class="block text-sm">Sats:</label>
-        <input id="buildRoute-amt" type="number" value={state.createInvoice.amt} oninput={setAmount} class="w-20 p-2" min="0"/>
+        <input id="buildRoute-amt" type="number" value={state.createInvoice.amt} oninput={setAmount} class="w-20 p-2 border border-yellow-400" min="0"/>
       </div>
 
       <div class="mt-4 flex">
