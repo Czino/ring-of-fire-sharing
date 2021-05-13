@@ -1,6 +1,10 @@
 import { Http } from '../../effects/http'
 import { changeView } from '../../actions/changeView'
 
+const errors = {
+  'INVALID_FORM': 'Form invalid, please check your inputs.',
+  'HOPS_INVALID': 'One or more public keys of the hops are not valid.'
+}
 const addRing = (state, event) => {
   event.preventDefault()
   return [
@@ -26,10 +30,15 @@ const addRing = (state, event) => {
           ...state,
           addRingStatus: response,
           addRing: false,
+          newRing: {
+            name: '',
+            hops: ['']
+          },
           error: response.error
         }
       },
       error(state, error) {
+        console.log(error)
         return {
           ...state,
           addRing: false,
@@ -48,11 +57,22 @@ const setRingName = (state, event) => ({
   }
 })
 const setHop = (state, event, i) => {
-  state.newRing.hops[i] = event.target.value
+  event.target.value.split(' ').map((hop, j) => {
+    console.log(hop)
+    state.newRing.hops[i+j] = hop
+  })
   return {...state}
 }
 const addHop = state => {
   state.newRing.hops.push('')
+  setTimeout(() => {
+    document.getElementById(`newRing-hop-${state.newRing.hops.length - 1}`).focus()
+  })
+  return {...state}
+}
+const removeHop = state => {
+  if (state.newRing.hops.length === 1) return state
+  state.newRing.hops.pop()
   return {...state}
 }
 
@@ -67,17 +87,22 @@ export const Dashboard = ({ state }) => <div>
         )}
       </ul>
       <h3>Add ring</h3>
-      <form onsubmit={addRing} class="w-1/2 grid grid-cols-1 gap-4">
-        <input type="text" class="p-2" placeholder="Ring name" oninput={setRingName}/>
-        {state.newRing.hops.map((hop, i) => 
-          <input type="text" value={hop} class="p-2" placeholder={`Hop ${i+1}`}  oninput={(state, event) => setHop(state, event, i)}/>)
+      <form onsubmit={addRing} class="w-1/2 grid grid-cols-1 gap-2">
+        <input type="text" class="p-2" placeholder="Ring name" oninput={setRingName} autofocus/>
+        <p class="text-sm mt-4 mb-0">Hops (Make sure to add hops in ring order)</p>
+        {state.newRing.hops.map((hop, i, arr) => 
+          <input type="text" id={`newRing-hop-${i}`} value={hop} class="p-2" placeholder={`Hop ${i+1}`} oninput={(state, event) => setHop(state, event, i)} />)
         }
         <div>
-          <button type="button" class="w-6 h-6 cursor-pointer bg-gray-400 text-white border-0 hover:bg-yellow-500" onClick={state => addHop(state)}>+</button>
+          <button type="button" class="w-6 h-6 cursor-pointer bg-gray-400 text-white border-0 hover:bg-yellow-500" onClick={state => removeHop(state)} tabindex="-1">-</button>
+          <button type="button" class="w-6 h-6 cursor-pointer bg-gray-400 text-white border-0 hover:bg-yellow-500 ml-2" onfocus={state => addHop(state)} onClick={state => addHop(state)}>+</button>
         </div>
-        <button type="submit" class="cursor-pointer bg-yellow-400 text-white p-4 border-0 hover:bg-yellow-500" disabled={state.addRing}>
+        <button type="submit" class="mt-4 cursor-pointer bg-yellow-400 text-white px-4 py-2 border-0 hover:bg-yellow-500" disabled={state.addRing}>
           Add
         </button>
+        {state.error
+          ? <p class="bg-red-600 text-white p-4">{errors[state.error.error]}</p>
+          : ''}
       </form>
     </div>
     <div class="leading-8">

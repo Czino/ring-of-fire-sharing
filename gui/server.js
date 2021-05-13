@@ -17,6 +17,7 @@ const getCache = (type, id, ttl, callback) => {
   }
   return cache[type][id].data
 }
+
 class LND {
   constructor(options) {
     this.macaroon = fs.readFileSync(path.join(__dirname, options.macaroon)).toString('hex')
@@ -33,7 +34,7 @@ class LND {
       json: true,
       method: 'GET'
     })
-    return JSON.stringify(data);
+    return data;
   }
   getNodeInfo = async nodeId => {
     const data = await request({
@@ -46,7 +47,7 @@ class LND {
       json: true,
       method: 'GET'
     })
-    return JSON.stringify(data);
+    return data;
   }
   listChannels = async peer => {
     let url = `${this.url}/v1/channels`
@@ -64,7 +65,7 @@ class LND {
       json: true,
       method: 'GET'
     })
-    return JSON.stringify(data);
+    return data;
   }
   buildRoute = async ({ hops, channelId, amt}) => {
     let url = `${this.url}/v2/router/route`
@@ -84,7 +85,7 @@ class LND {
       method: 'POST',
       form: JSON.stringify(requestBody),
     })
-    return JSON.stringify(data);
+    return data;
   }
   addInvoice = async ({ amt, memo, expiry }) => {
     let url = `${this.url}/v1/invoices`
@@ -104,7 +105,7 @@ class LND {
       method: 'POST',
       form: JSON.stringify(requestBody),
     })
-    return JSON.stringify(data);
+    return data;
   }
   sendToRoute = async ({ route, paymentHash}) => {
     let url = `${this.url}/v2/router/route/send`
@@ -123,10 +124,17 @@ class LND {
       method: 'POST',
       form: JSON.stringify(requestBody),
     })
-    return JSON.stringify(data);
+    return data;
   }
 }
 
+const getInfo = async () => await getCache('info', 'own', 30 * 60 * 1000, async () => {
+  return await lnd.getInfo()
+})
+const getNodeInfo = async nodeId => await getCache('nodeInfo', nodeId, 30 * 60 * 1000, async () => {
+  const info = await lnd.getNodeInfo(nodeId)
+  return info
+})
 const getRingConfig = ring => fs.readFileSync(path.join(__dirname, `../rings/${ring}.json`), { encoding: 'utf8'})
 
 const lnd = new LND({
@@ -161,13 +169,34 @@ app.get('/getRings', async (req, res) => {
 })
 
 app.post('/addRing', async (req, res) => {
+  const info = await getInfo()
   const name = req.body.name
   const ring = name.replace(/[^a-zA-Z0-9]/g, '')
-  const hops = req.body.hops
+  let hops = req.body.hops
+  const hopsInValid = hops.some(hop => !/[a-z0-9]{66}/i.test(hop))
+
+  if (!name || !hops) {
+    res.status(400)
+    return res.send({
+      error: 'INVALID_FORM'
+    })
+  }
+  if (hopsInValid) {
+    res.status(400)
+    return res.send({
+      error: 'HOPS_INVALID'
+    })
+  }
+  const myNodeIndex = hops.findIndex(hop => hop === info.identity_pubkey)
+  if (myNodeIndex >= 0 && myNodeIndex < hops.length) {
+    hops = hops.slice(myNodeIndex, hops.length).concat(hops.slice(0, myNodeIndex)).filter(hop => hop !== info.identity_pubkey)
+  }
+
   const json = {
     name,
     hops
   }
+
   fs.writeFile(path.join(__dirname, `../rings/${ring}.json`), JSON.stringify(json), (err, data) => {
     res.setHeader('Content-Type', 'application/json')
     json.id = ring
@@ -175,19 +204,42 @@ app.post('/addRing', async (req, res) => {
   })
 })
 
+
+app.post('/deleteRing', async (req, res) => {
+  const ring = req.body.ring
+
+  if (!ring) {
+    res.status(400)
+    return res.send({
+      error: 'VALUE_MISSING'
+    })
+  }
+
+  fs.unlink(path.join(__dirname, `../rings/${ring}.json`), (err, data) => {
+    res.setHeader('Content-Type', 'application/json')
+    res.send({
+      id: ring
+    })
+  })
+})
+
 app.get('/getRingConfig', async (req, res) => {
   const ring = req.query.ring
   fs.readFile(path.join(__dirname, `../rings/${ring}.json`), { encoding: 'utf8'}, (err, data) => {
-    data.id = ring
     res.setHeader('Content-Type', 'application/json')
+    if (err) {
+      res.status(404)
+      return res.send({
+        error: 'FILE_NOT_FOUND'
+      })
+    }
+    data.id = ring
     res.send(data)
   })
 })
 
 app.get('/getInfo', async (req, res) => {
-  const info = await getCache('info', 'own', 30 * 60 * 1000, async () => {
-    return await lnd.getInfo()
-  })
+  const info = await getInfo()
 
   res.setHeader('Content-Type', 'application/json')
   res.send(info)
@@ -196,10 +248,7 @@ app.get('/getInfo', async (req, res) => {
 
 app.get('/getNodeInfo', async (req, res) => {
   const nodeId = req.query.nodeId
-  const nodeInfo = await getCache('nodeInfo', nodeId, 30 * 60 * 1000, async () => {
-    const info = await lnd.getNodeInfo(nodeId)
-    return info
-  })
+  const nodeInfo = await getNodeInfo(nodeId)
   res.setHeader('Content-Type', 'application/json')
   res.send(nodeInfo)
 })
