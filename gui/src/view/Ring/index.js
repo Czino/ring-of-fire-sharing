@@ -5,7 +5,6 @@ let initialised = false
 let peers = []
 let ringConfig = {}
 let brokenNode = null
-let cached = null
 
 const deleteRing = (state, ring) => {
   return [
@@ -175,7 +174,7 @@ const sendToRoute = state => {
 export const Ring = ({ state }) => {
   setTimeout(async () => {
     let now = new Date()
-    if (!cached || now.getTime() - cached.getTime() > 60 * 1000) {
+    if (!state.ringCache || now.getTime() - state.ringCache.getTime() > 60 * 1000) {
       ringConfig = await fetch(`./getRingConfig?ring=${state.ring}`)
       ringConfig = await ringConfig.json()
       // ring = await fetch(`./getRingInfo?ring=${state.ring.id}`)
@@ -185,7 +184,7 @@ export const Ring = ({ state }) => {
       ringConfig.hops.unshift(state.myNode.identity_pubkey)
       peers = await Promise.all(ringConfig.hops.map(peer => fetch(`./getNodeInfo?nodeId=${peer}`)))
       peers = await Promise.all(peers.map(peer => peer.json()))
-      cached = now
+      state.ringCache = now
     }
 
     if (state.error) {

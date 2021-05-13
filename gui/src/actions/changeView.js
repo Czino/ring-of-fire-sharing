@@ -4,5 +4,6 @@ export const changeView = (state, view, ring) => ({
   route: null,
   invoice: null,
   paymentStatus: null,
+  ringCache: null,
   ring
 })
