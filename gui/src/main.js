@@ -4,7 +4,7 @@ import { Dashboard } from './view/Dashboard'
 import { MyNode } from './view/MyNode'
 import { Ring } from './view/Ring'
 
-const baseUrl = `${window.location.protocol}//${window.location.hostname}`
+const baseUrl = window.location.origin
 
 ;(async () => {
   let myNode = await fetch(baseUrl + '/getInfo')

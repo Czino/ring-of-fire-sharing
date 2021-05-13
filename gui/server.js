@@ -328,5 +328,6 @@ app.post('/sendToRoute', async (req, res) => {
   }
 })
 
-http.createServer(app).listen(process.env.PORT || 80)
-console.info('Created http server with port', process.env.PORT || 80)
+let port = process.env.PORT || (config.server && config.server.port ? config.server.port : 80)
+http.createServer(app).listen(port)
+console.info('Created http server with port', port)
