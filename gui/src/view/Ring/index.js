@@ -43,7 +43,9 @@ const deleteRing = (state, ring) => {
   ]
 }
 const buildRoute = (state, direction, amt) => {
-  const hops = direction === 'clockwise' ? JSON.parse(JSON.stringify(ringConfig.hops)).reverse() : ringConfig.hops
+  let hops = ringConfig.hops.filter(hop => hop !== state.myNode.identity_pubkey)
+  hops = direction === 'clockwise' ? JSON.parse(JSON.stringify(hops)).reverse() : hops
+  hops.push(state.myNode.identity_pubkey)
   return [
     {
       ...state,
@@ -62,7 +64,7 @@ const buildRoute = (state, direction, amt) => {
         },
         body: JSON.stringify({
           amt,
-          hops: hops.filter(hop => hop !== state.myNode.identity_pubkey)
+          hops
         })
       },
       action(state, response) {
@@ -149,12 +151,22 @@ const sendToRoute = state => {
         },
         body: JSON.stringify({
           route: state.route,
+          paymentAddr: state.invoice.payment_addr,
           paymentHash: state.invoice.r_hash
         })
       },
       action(state, response) {
+        if (response.status === 'SUCCEEDED') {
+          return {
+            ...state,
+            sendToRoute: false,
+            route: null,
+            invoice: null,
+            paymentStatus: response
+          }
+        }
         return {
-          ...state,
+        ...state,
           sendToRoute: false,
           paymentStatus: response,
           error: response.error
@@ -210,20 +222,20 @@ export const Ring = ({ state }) => {
     <h2 class="lg:col-span-4">{state.ring}</h2>
     <div class="lg:col-span-1">
       <h3>Options</h3>
-      <button class="cursor-pointer bg-yellow-400 text-white px-4 py-2 border-0 hover:bg-yellow-500" disabled={state.delete} onclick={state => deleteRing(state, state.ring)}>
+      <button class={{'cursor-pointer bg-yellow-400 text-white px-4 py-2 border-0 hover:bg-yellow-500': true, 'opacity-50': state.delete}} disabled={state.delete} onclick={state => deleteRing(state, state.ring)}>
         Delete
       </button>
       <h3>Build route</h3>
       <div>
         <label for="buildRoute-amt" class="block text-sm">Sats:</label>
-        <input id="buildRoute-amt" type="number" value={state.createInvoice.amt} oninput={setAmount} class="w-20 p-2"/>
+        <input id="buildRoute-amt" type="number" value={state.createInvoice.amt} oninput={setAmount} class="w-20 p-2" min="0"/>
       </div>
 
       <div class="mt-4 flex">
-        <button class="cursor-pointer bg-yellow-400 text-white px-4 py-2 border-0 hover:bg-yellow-500" disabled={state.buildRoute} onclick={state => buildRoute(state, 'clockwise', state.createInvoice.amt)}>
+        <button class={{'cursor-pointer bg-yellow-400 text-white px-4 py-2 border-0 hover:bg-yellow-500': true, 'opacity-50': state.buildRoute}} disabled={state.buildRoute} onclick={state => buildRoute(state, 'clockwise', state.createInvoice.amt)}>
           Clockwise
         </button>
-        <button class="cursor-pointer bg-yellow-400 text-white px-4 py-2 border-0 hover:bg-yellow-500 ml-4" disabled={state.buildRoute} onclick={state => buildRoute(state, 'counter-clockwise', state.createInvoice.amt)}>
+        <button class={{'cursor-pointer bg-yellow-400 text-white px-4 py-2 border-0 hover:bg-yellow-500 ml-4': true, 'opacity-50': state.buildRoute}}  disabled={state.buildRoute} onclick={state => buildRoute(state, 'counter-clockwise', state.createInvoice.amt)}>
           Counter-clockwise
         </button>
       </div>
@@ -231,10 +243,10 @@ export const Ring = ({ state }) => {
         ? <div>
           <p>Route available for sending {state.createInvoice.amt} sats with fees of {state.route.total_fees} sats!</p>
           { state.invoice
-            ? <button class="cursor-pointer bg-yellow-400 text-white px-4 py-2 border-0 hover:bg-yellow-500" disabled={state.sendToRoute} onclick={state => sendToRoute(state)}>
+            ? <button class={{'cursor-pointer bg-yellow-400 text-white px-4 py-2 border-0 hover:bg-yellow-500': true, 'opacity-50': state.sendToRoute}}  disabled={state.sendToRoute} onclick={state => sendToRoute(state)}>
                 Make round payment
               </button>
-            : <button class="cursor-pointer bg-yellow-400 text-white p-3 border-0 hover:bg-yellow-500" disabled={state.addInvoice} onclick={state => addInvoice(state, state.createInvoice.amt, state.ring + ' roundpayment')}>
+            : <button class={{'cursor-pointer bg-yellow-400 text-white px-4 py-2 border-0 hover:bg-yellow-500': true, 'opacity-50': state.addInvoice}}  disabled={state.addInvoice} onclick={state => addInvoice(state, state.createInvoice.amt, state.ring + ' roundpayment')}>
               Create Invoice
             </button>
           }
@@ -246,7 +258,7 @@ export const Ring = ({ state }) => {
         ? <p>{state.error.message}</p>
         : ''}
       {state.paymentStatus
-        ? state.paymentStatus.status === 'SUCCESS'
+        ? state.paymentStatus.status === 'SUCCEEDED'
           ? <p class="text-green-600">Roundpayment was successful!</p>
           : <p class="text-red-600">Roundpayment failed {state.paymentStatus.failure.code}</p>
         : ''}

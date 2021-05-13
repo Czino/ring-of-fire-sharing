@@ -73,6 +73,7 @@ class LND {
         amt_msat: String((parseInt(amt) || 1) * 1000),
         outgoing_chan_id: channelId,
         hop_pubkeys: hops.map(hop => Buffer.from(hop, 'hex').toString('base64')),
+        final_cltv_delta: 128
     }
     const data = await request({
       url,
@@ -92,7 +93,7 @@ class LND {
       let requestBody = {
         value: amt,
         memo,
-        expiry: expiry || 3600
+        expiry: String(expiry || 3600)
     }
     const data = await request({
       url,
@@ -107,12 +108,20 @@ class LND {
     })
     return data;
   }
-  sendToRoute = async ({ route, paymentHash}) => {
+  sendToRoute = async ({ route, paymentAddr, paymentHash}) => {
     let url = `${this.url}/v2/router/route/send`
-      let requestBody = { 
+    let lastHop = route.hops[route.hops.length -1]
+
+    lastHop.mpp_record = {
+      payment_addr: paymentAddr,
+      total_amt_msat: String(parseInt(route.total_amt_msat) - parseInt(route.total_fees_msat))
+    }
+
+    let requestBody = { 
         route,
         paymentHash
     }
+
     const data = await request({
       url,
       headers: {
@@ -302,16 +311,19 @@ app.post('/addInvoice', async (req, res) => {
 
 app.post('/sendToRoute', async (req, res) => {
   const route = req.body.route
+  const paymentAddr = req.body.paymentAddr
   const paymentHash = req.body.paymentHash
 
   res.setHeader('Content-Type', 'application/json')
   try {
     const status = await lnd.sendToRoute({
       route,
+      paymentAddr,
       paymentHash
     })
     res.send(status)
   } catch (e) {
+    res.status(500)
     res.send(e)
   }
 })
