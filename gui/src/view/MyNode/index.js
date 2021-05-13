@@ -10,15 +10,6 @@ export const MyNode = ({ state }) => {
       peers = await fetch(state.baseUrl + '/listChannels')
       peers = await peers.json()
       channels = peers.channels
-    } else {
-      peers = await Promise.all(state.config.peers.map(peer => fetch(`./listChannels?peer=${peer}`)))
-      peers = await Promise.all(peers.map(peer => peer.json()))
-
-      channels = peers
-      .map(peer => peer.channels)
-      .reduce((arr, channels) => {
-        return arr.concat(channels)
-      }, [])
     }
 
     peers = await Promise.all(channels.map(channel => fetch(`./getNodeInfo?nodeId=${channel.remote_pubkey}`)))
