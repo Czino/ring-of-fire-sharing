@@ -187,16 +187,16 @@ export const Ring = ({ state }) => {
   setTimeout(async () => {
     let now = new Date()
     if (!state.ringCache || now.getTime() - state.ringCache.getTime() > 60 * 1000) {
+      state.ringCache = now
       ringConfig = await fetch(`./getRingConfig?ring=${state.ring}`)
       ringConfig = await ringConfig.json()
       // ring = await fetch(`./getRingInfo?ring=${state.ring.id}`)
       peers = await Promise.all(ringConfig.hops.map(peer => fetch(`./listChannels?peer=${peer}`)))
       peers = await Promise.all(peers.map(peer => peer.json()))
 
-      ringConfig.hops.unshift(state.myNode.identity_pubkey)
+      if (ringConfig.hops.some(hop => hop !== state.myNode.identity_pubkey)) ringConfig.hops.unshift(state.myNode.identity_pubkey)
       peers = await Promise.all(ringConfig.hops.map(peer => fetch(`./getNodeInfo?nodeId=${peer}`)))
       peers = await Promise.all(peers.map(peer => peer.json()))
-      state.ringCache = now
     }
 
     if (state.error) {
@@ -211,6 +211,7 @@ export const Ring = ({ state }) => {
       }
     }
     drawRing(peers, state.myNode.identity_pubkey, brokenNode)
+
   })
 
   if (!initialised) {
