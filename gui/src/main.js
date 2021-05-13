@@ -28,8 +28,8 @@ const baseUrl = window.location.origin
     },
     view: state => (
       <div class="p-8">
-        <h1 class="text-center">Rings of Fire 🔥</h1>
-        <Navigation state={state}/>
+        <h1 class="text-3xl text-center">Rings of Fire 🔥</h1>
+        <Navigation classname="my-6" state={state}/>
         {state.view === 'dashboard'
           ? <Dashboard state={state}/>
           : state.view === 'myNode'

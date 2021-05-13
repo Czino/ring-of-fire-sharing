@@ -1,5 +1,6 @@
 import Graph from './graph.js'
 import { addClass, removeClass } from '../htmlUtils'
+import { toCurrency } from '../stringUtils'
 
 export const drawChannels = (channels, myNode) => {
   const $graph = document.getElementById('graph')
@@ -86,8 +87,8 @@ export const drawChannels = (channels, myNode) => {
             if (line.isActive) return
             $extraInfo.innerHTML = `
               <h1 class="text-xl">Balance</h1>
-              <p>Local: ${channel.local_balance} sats</p>
-              <p>Remote: ${channel.remote_balance} sats</p>
+              <p>Local: ${toCurrency(channel.local_balance, 'BTC')}</p>
+              <p>Remote: ${toCurrency(channel.remote_balance, 'BTC')}</p>
             `
             line.isActive = true
             removeClass($extraInfo, 'hidden')

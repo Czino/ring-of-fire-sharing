@@ -36,6 +36,19 @@ class LND {
     })
     return data;
   }
+  getChannelBalance = async () => {
+    const data = await request({
+      url: `${this.url}/v1/balance/channels`,
+      headers: {
+        'Grpc-Metadata-macaroon': this.macaroon,
+        'Content-Type': 'application/json'
+      },
+      rejectUnauthorized: false,
+      json: true,
+      method: 'GET'
+    })
+    return data;
+  }
   getNodeInfo = async nodeId => {
     const data = await request({
       url: `${this.url}/v1/graph/node/${nodeId}`,
@@ -139,6 +152,9 @@ class LND {
 
 const getInfo = async () => await getCache('info', 'own', 30 * 60 * 1000, async () => {
   return await lnd.getInfo()
+})
+const getChannelBalance = async () => await getCache('channelBalance', 'own', 15 * 60 * 1000, async () => {
+  return await lnd.getChannelBalance()
 })
 const getNodeInfo = async nodeId => await getCache('nodeInfo', nodeId, 30 * 60 * 1000, async () => {
   const info = await lnd.getNodeInfo(nodeId)
@@ -249,6 +265,7 @@ app.get('/getRingConfig', async (req, res) => {
 
 app.get('/getInfo', async (req, res) => {
   const info = await getInfo()
+  info.channelBalance = await getChannelBalance()
 
   res.setHeader('Content-Type', 'application/json')
   res.send(info)
