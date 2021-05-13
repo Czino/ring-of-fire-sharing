@@ -1,6 +1,7 @@
 import Graph from './graph.js'
 import { addClass, removeClass } from '../htmlUtils'
 
+let graph
 export const drawRing = (peers, myNode, brokenNode) => {
   const $graph = document.getElementById('ringGraph')
   const context = $graph.getContext('2d')
@@ -11,7 +12,7 @@ export const drawRing = (peers, myNode, brokenNode) => {
   $graph.height = $graph.clientHeight
   context.clearRect(0, 0, $graph.width, $graph.height);
 
-  let graph = new Graph('ringGraph')
+  graph = new Graph('ringGraph')
   graph.editable = false
   let radius = Math.min($graph.clientWidth, $graph.clientHeight) / 3
   let nodeSize = radius / 10

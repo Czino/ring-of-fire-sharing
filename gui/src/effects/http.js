@@ -8,21 +8,8 @@ export function assign(source, assignments) {
 
 function httpEffect(dispatch, props) {
   fetch(props.url, props.options)
-    .then(response => {
-      if (!response.ok) {
-        throw response
-      }
-      return response
-    })
-    .then(response => {
-      return response[props.response]()
-    })
-    .then(result => {
-      dispatch(props.action, result)
-    })
-    .catch(error => {
-      dispatch(props.error, error)
-    })
+    .then(response => response[props.response]())
+    .then(result => result.error ? dispatch(props.error, result) : dispatch(props.action, result))
 }
 
 /**
