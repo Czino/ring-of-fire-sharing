@@ -521,7 +521,6 @@ class Graph {
   }
 
   async depthFirstSearch(startid, endid, draw_path) {
-    console.log("inside function")
     let discovered_stack = [{
       "nodeid": startid,
       "parentid": startid
@@ -541,7 +540,6 @@ class Graph {
     }
     getPath = getPath.bind(this);
     let evaulateNode = function (nodeobject) {
-      console.log("here")
       if (visited.hasOwnProperty(nodeobject.nodeid)) {
         return evaulateNode(discovered_stack.shift());
       }
@@ -970,7 +968,6 @@ Graph._node = function (contextid, x = false, y = false, r = false, text = "", w
             resolve(img)
           };
           img.onerror = () => {
-            console.log("image load error");
             reject()
           };
           img.src = url;

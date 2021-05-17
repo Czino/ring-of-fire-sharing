@@ -287,7 +287,6 @@ export const Ring = ({ state }) => {
         if (index > ringConfig.hops.length - 1) index = 0
         if (index < 0) index = ringConfig.hops.length - 1
         brokenNode = ringConfig.hops[index]
-        console.log(index)
       }
     }
     drawRing(peers, state.myNode.identity_pubkey, brokenNode)

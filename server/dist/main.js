@@ -14,7 +14,6 @@ fetch('./getStatus')
   .then(drawGraph)
 
 function drawGraph(json) {
-  console.log(json)
   const allNodes = Object.keys(json)
     .map(key => json[key])
     .map(node => {
