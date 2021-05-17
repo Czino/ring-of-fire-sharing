@@ -80,13 +80,34 @@ class LND {
     })
     return data;
   }
+  fwdinghistory = async (startTime, endTime, indexOffset, numMaxEvents) => {
+    let url = `${this.url}/v1/switch`
+    let requestBody = {
+    }
+    if (startTime) requestBody.start_time = String(startTime)
+    if (endTime) requestBody.end_time  = String(endTime)
+    if (indexOffset) requestBody.index_offset = indexOffset
+    if (numMaxEvents) requestBody.num_max_events = numMaxEvents
+    const data = await request({
+      url,
+      headers: {
+        'Grpc-Metadata-macaroon': this.macaroon,
+        'Content-Type': 'application/json'
+      },
+      rejectUnauthorized: false,
+      json: true,
+      method: 'POST',
+      form: JSON.stringify(requestBody)
+    })
+    return data;
+  }
   buildRoute = async ({ hops, channelId, amt}) => {
     let url = `${this.url}/v2/router/route`
-      let requestBody = { 
-        amt_msat: String((parseInt(amt) || 1) * 1000),
-        outgoing_chan_id: channelId,
-        hop_pubkeys: hops.map(hop => Buffer.from(hop, 'hex').toString('base64')),
-        final_cltv_delta: 128
+    let requestBody = { 
+      amt_msat: String((parseInt(amt) || 1) * 1000),
+      outgoing_chan_id: channelId,
+      hop_pubkeys: hops.map(hop => Buffer.from(hop, 'hex').toString('base64')),
+      final_cltv_delta: 128
     }
     const data = await request({
       url,
@@ -198,7 +219,7 @@ app.post('/addRing', async (req, res) => {
   const name = req.body.name
   const ring = name.replace(/[^a-zA-Z0-9]/g, '')
   let hops = req.body.hops
-  const hopsInValid = hops.some(hop => !/[a-z0-9]{66}/i.test(hop))
+  const hopsInValid = hops.some(hop => !/^[a-z0-9]{66}$/i.test(hop.pubkey))
 
   if (!name || !hops) {
     res.status(400)
@@ -214,7 +235,7 @@ app.post('/addRing', async (req, res) => {
   }
   const myNodeIndex = hops.findIndex(hop => hop === info.identity_pubkey)
   if (myNodeIndex >= 0 && myNodeIndex < hops.length) {
-    hops = hops.slice(myNodeIndex, hops.length).concat(hops.slice(0, myNodeIndex)).filter(hop => hop !== info.identity_pubkey)
+    hops = hops.slice(myNodeIndex, hops.length).concat(hops.slice(0, myNodeIndex)).filter(hop => hop.pubkey !== info.identity_pubkey)
   }
 
   const json = {
@@ -229,6 +250,37 @@ app.post('/addRing', async (req, res) => {
   })
 })
 
+
+app.post('/editRing', async (req, res) => {
+  const ringConfig = req.body.ringConfig
+  if (!ringConfig) {
+    res.status(400)
+    return res.send({
+      error: 'INVALID_FORM'
+    })
+  }
+
+  const ring = ringConfig.id
+  if (!ring) {
+    res.status(400)
+    return res.send({
+      error: 'INVALID_FORM'
+    })
+  }
+
+  const hopsInValid = ringConfig.hops.some(hop => !/[a-z0-9]{66}/i.test(hop.pubkey))
+  if (hopsInValid) {
+    res.status(400)
+    return res.send({
+      error: 'HOPS_INVALID'
+    })
+  }
+
+  fs.writeFile(path.join(__dirname, `../rings/${ring}.json`), JSON.stringify(ringConfig), (err, data) => {
+    res.setHeader('Content-Type', 'application/json')
+    res.send(ringConfig)
+  })
+})
 
 app.post('/deleteRing', async (req, res) => {
   const ring = req.body.ring
@@ -258,7 +310,14 @@ app.get('/getRingConfig', async (req, res) => {
         error: 'FILE_NOT_FOUND'
       })
     }
+    data = JSON.parse(data)
     data.id = ring
+    if (!data.hops[0].label) {
+      data.hops = data.hops.map(hop => ({
+        pubkey: hop,
+        label: null
+      }))
+    }
     res.send(data)
   })
 })
@@ -274,6 +333,13 @@ app.get('/getInfo', async (req, res) => {
 
 app.get('/getNodeInfo', async (req, res) => {
   const nodeId = req.query.nodeId
+  if (!/^[a-z0-9]{66}$/i.test(nodeId)) {
+    res.status(400)
+    return res.send({
+      error: 'PUB_KEY_INVALID'
+    })
+  }
+
   const nodeInfo = await getNodeInfo(nodeId)
   res.setHeader('Content-Type', 'application/json')
   res.send(nodeInfo)
@@ -287,6 +353,21 @@ app.get('/listChannels', async (req, res) => {
       return await lnd.listChannels(peer)
     })
     res.send(channels)
+  } catch (e) {
+    res.send(e.error)
+  }
+})
+app.post('/fwdinghistory', async (req, res) => {
+  const startTime = req.body.startTime
+  const endTime = req.body.endTime
+  const indexOffset = req.body.indexOffset
+  const numMaxEvents = req.body.numMaxEvents
+  res.setHeader('Content-Type', 'application/json')
+  try {
+    const history = await getCache('fwdinghistory', String(startTime) + String(endTime) + String(indexOffset) + String(numMaxEvents), 10 * 60 * 1000, async () => {
+      return await lnd.fwdinghistory(startTime, endTime, indexOffset, numMaxEvents)
+    })
+    res.send(history)
   } catch (e) {
     res.send(e.error)
   }

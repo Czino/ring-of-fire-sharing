@@ -1,12 +1,18 @@
 import { Http } from '../../effects/http'
 import { changeView } from '../../actions/changeView'
+import { selectAll } from '../../actions/selectAll'
 import { toCurrency } from '../../stringUtils'
 
 const errors = {
   'INVALID_FORM': 'Form invalid, please check your inputs.',
-  'HOPS_INVALID': 'One or more public keys of the hops are not valid.'
+  'HOPS_INVALID': 'One or more public keys of the hops are not valid.',
+  'PUB_KEY_INVALID': 'One or more public keys of the hops are not valid.'
 }
 const addRing = (state, event) => {
+  let hops = state.newRing.hops.map((hop, i) => ({
+    pubkey: hop,
+    label: state.newRing.labels[i]
+  }))
   event.preventDefault()
   return [
     {
@@ -22,7 +28,7 @@ const addRing = (state, event) => {
         },
         body: JSON.stringify({
           name: state.newRing.name,
-          hops: state.newRing.hops
+          hops
         })
       },
       action(state, response) {
@@ -50,6 +56,43 @@ const addRing = (state, event) => {
 ]
 }
 
+const getNodeInfo = (state, event, i) => {
+  let hop = state.newRing.hops[i]
+  return [
+    {
+      ...state,
+      getNodeInfo: true
+    },
+    Http({
+      url: `${state.baseUrl}/getNodeInfo?nodeId=${hop}`,
+      options: {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      },
+      action(state, response) {
+        let index = state.newRing.hops.findIndex(hop => hop === response.node.pub_key)
+        state.newRing.labels[index] = response.node.alias
+        return {
+          ...state,
+          getNodeInfo: false,
+          newRing: state.newRing,
+          error: response.error
+        }
+      },
+      error(state, error) {
+        console.log(error)
+        return {
+          ...state,
+          getNodeInfo: false,
+          error
+        }
+      }
+    })
+]
+}
+
 const setRingName = (state, event) => ({
   ...state,
   newRing: {
@@ -59,8 +102,13 @@ const setRingName = (state, event) => ({
 })
 const setHop = (state, event, i) => {
   event.target.value.split(' ').map((hop, j) => {
-    console.log(hop)
     state.newRing.hops[i+j] = hop
+  })
+  return getNodeInfo(state, event, i)
+}
+const setLabel = (state, event, i) => {
+  event.target.value.split(' ').map((label, j) => {
+    state.newRing.labels[i+j] = label
   })
   return {...state}
 }
@@ -77,11 +125,6 @@ const removeHop = state => {
   return {...state}
 }
 
-const selectAll = (state, event) => {
-  event.target.select()
-  return state
-}
-
 export const Dashboard = ({ state }) => {
   const localBalance = parseInt(state.myNode.channelBalance.local_balance.sat)
   const remoteBalance = parseInt(state.myNode.channelBalance.remote_balance.sat)
@@ -89,7 +132,7 @@ export const Dashboard = ({ state }) => {
 
   return <div>
     <h2 class="text-xl text-center">Dashboard</h2>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
       <div>
         <h3 class="text-l">Rings</h3>
         <ul>
@@ -98,12 +141,15 @@ export const Dashboard = ({ state }) => {
           )}
         </ul>
         <h3 class="text-l">Add ring</h3>
-        <form onsubmit={addRing} class="w-1/2 grid grid-cols-1 gap-2">
+        <form onsubmit={addRing} class="grid grid-cols-1 gap-2">
           <input type="text" class="p-2 border border-yellow-400" placeholder="Ring name" oninput={setRingName} autofocus/>
           <p class="text-sm mt-4 mb-0">Hops (Make sure to add hops in ring order)</p>
-          {state.newRing.hops.map((hop, i, arr) => 
-            <input type="text" id={`newRing-hop-${i}`} value={hop} class="p-2 border border-yellow-400" placeholder={`Hop ${i+1}`} oninput={(state, event) => setHop(state, event, i)} />)
-          }
+          {state.newRing.hops.map((hop, i, arr) =>
+            <div class="grid grid-cols-2 gap-2">
+              <input type="text" id={`newRing-hop-${i}`} value={hop} class="p-2 border border-yellow-400" placeholder={`Hop ${i+1}`} oninput={(state, event) => setHop(state, event, i)} onblur={(state, event) => setHop(state, event, i)} />
+              <input type="text" id={`newRing-hop-label-${i}`} value={state.newRing?.labels[i]} class="p-2 border border-yellow-400" placeholder={`Label (default: alias/pubkey)`} oninput={(state, event) => setLabel(state, event, i)} />
+            </div>
+          )}
           <div>
             <button type="button" class="w-6 h-6 cursor-pointer text-white border-0 bg-gray-400 hover:bg-yellow-500" onClick={state => removeHop(state)} tabindex="-1">-</button>
             <button type="button" class="w-6 h-6 cursor-pointer text-white border-0 bg-gray-400 hover:bg-yellow-500 ml-2" onfocus={state => addHop(state)} onClick={state => addHop(state)}>+</button>

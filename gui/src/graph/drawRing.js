@@ -27,7 +27,7 @@ export const drawRing = (peers, myNode, brokenNode) => {
       peer.active = true
       nodes[peer.node.pub_key] = graph.node(x, y, size, peer.node.alias, 3)
       nodes[peer.node.pub_key].custom = peer
-      if (brokenNode && brokenNode === peer.node.pub_key) {
+      if (brokenNode && brokenNode.pubkey === peer.node.pub_key) {
         nodes[peer.node.pub_key].color = '#f00'
       } else {
         nodes[peer.node.pub_key].color = peer.active ? peer.node.color : '#ff9800'

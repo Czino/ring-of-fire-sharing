@@ -20,7 +20,8 @@ const baseUrl = window.location.origin
       view: 'dashboard',
       newRing: {
         name: '',
-        hops: ['']
+        hops: [''],
+        labels: ['']
       },
       createInvoice: {
         amt: 0
